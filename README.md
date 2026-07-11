@@ -1,3 +1,41 @@
+# AntiPopup - Paper 26.2 / Java 25 fork
+
+> [!IMPORTANT]
+> This `mrfdev` fork is intentionally specialized for Paper 26.2. For the
+> original multi-version and proxy-compatible project, see
+> [KaspianDev/AntiPopup](https://github.com/KaspianDev/AntiPopup).
+
+## What is special about this fork?
+
+- Builds a standalone Paper server plugin only; Velocity and the historical
+  Minecraft NMS modules are excluded from the active Gradle project and final
+  artifact.
+- Includes only the Paper 26.2 `v26.2` injector and declares
+  `api-version: '26.2'`.
+- Compiles every retained project module as Java 25 bytecode. The resulting
+  plugin runs on Java 25 and newer JVMs, including Java 26.0.1.
+- Shades its runtime libraries, including PacketEvents, BoostedYAML, bStats,
+  Adventure, and FoliaLib, so no companion dependency jars are required.
+- Has been compiled with Gradle 9.4.1 and smoke-tested through a complete
+  enable, Paper 26.2 injector selection, and clean shutdown on Paper
+  26.2-29-dev with Java 26.0.1.
+
+## Building this fork
+
+JDK 25 is required as the Gradle compilation toolchain.
+
+```bash
+./gradlew clean build
+```
+
+The deployable shaded plugin is written to:
+
+```text
+build/libs/AntiPopup-13.2-j25-mc26.2.jar
+```
+
+## Original project information
+
 **For faster updates, priority support and a discord role purchase AntiPopup Pro on Polymart.**  
 Click the button below for more details.
 

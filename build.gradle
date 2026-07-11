@@ -6,14 +6,19 @@ plugins {
 
 dependencies {
     implementation project(path: ":spigot", configuration: "shadow")
-    implementation project(path: ":velocity", configuration: "shadow")
 }
 
 tasks {
     build {
         dependsOn(shadowJar)
     }
+    jar {
+        enabled = false
+    }
     shadowJar {
+        archiveFileName.set(project.providers.provider {
+            "AntiPopup-${project.version}-j25-mc26.2.jar"
+        })
         archiveClassifier = ""
     }
 }
