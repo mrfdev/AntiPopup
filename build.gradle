@@ -53,10 +53,3 @@ allprojects {
     }
 
 }
-
-tasks.register("buildAndMove", Copy) {
-    from jar
-    into "/home/kaspian/Documents/Minecraft/SpigotServer/plugins"
-
-    dependsOn(tasks.build)
-}

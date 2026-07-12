@@ -123,7 +123,8 @@ public final class AntiPopup extends JavaPlugin {
             }
         }
 
-        Objects.requireNonNull(this.getCommand("antipopup")).setExecutor(new CommandRegister(config));
+        Objects.requireNonNull(this.getCommand("antipopup"))
+               .setExecutor(new CommandRegister(config, getDescription().getVersion()));
         getLogger().info("Commands registered.");
 
         if (config.isFilterNotSecure()) {

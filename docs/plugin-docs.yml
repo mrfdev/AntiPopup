@@ -1,0 +1,12 @@
+id: antipopup
+name: AntiPopup
+category: custom-server-plugin
+summary: Hide the unsafe-server popup and limit vanilla chat reporting on 1MoreBlock.
+main_command: /antipopup
+docs_url: https://docs.1moreblock.com/custom-server-plugins/antipopup/
+player_guide: player-guide.md
+technical_readme: ../README.md
+java_target: "25"
+paper_target: "26.2"
+official_project: true
+repository: mrfdev/AntiPopup

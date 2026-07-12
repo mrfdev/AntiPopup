@@ -35,8 +35,8 @@ public class ConsoleMessages {
     public static final String[] SETUP_SUCCESS = {
             "-----------------[ READ ME ]-----------------",
             "Plugin is set up fully now. We changed value",
-            "of enforce-secure-chat in server.properties.",
-            "Server will restart in five seconds.",
+            "of enforce-secure-profile in the configured properties file.",
+            "Server will restart shortly.",
             "---------------------------------------------"
     };
 

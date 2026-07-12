@@ -20,7 +20,7 @@ public class Api {
     // TODO: Refactor eventually
     /**
      * This "sets up" the plugin aka changes
-     * enforce-secure-profile property in server.properties
+     * enforce-secure-profile property in the configured properties file
      * to false.
      *
      * @param time Delay of the setup.

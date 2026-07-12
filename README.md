@@ -1,72 +1,128 @@
-# AntiPopup - Paper 26.2 / Java 25 fork
+# AntiPopup
 
-> [!IMPORTANT]
-> This `mrfdev` fork is intentionally specialized for Paper 26.2. For the
-> original multi-version and proxy-compatible project, see
-> [KaspianDev/AntiPopup](https://github.com/KaspianDev/AntiPopup).
+AntiPopup is a standalone Paper plugin that removes the unsafe-server chat
+popup and limits Minecraft's chat-reporting path. This `mrfdev` fork is built
+specifically for **Paper 26.2** with **Java 25 bytecode**; historical Minecraft,
+Spigot, BungeeCord, and Velocity targets are not part of the active build.
 
-## What is special about this fork?
+Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/antipopup/)
 
-- Builds a standalone Paper server plugin only; Velocity and the historical
-  Minecraft NMS modules are excluded from the active Gradle project and final
-  artifact.
-- Includes only the Paper 26.2 `v26.2` injector and declares
-  `api-version: '26.2'`.
-- Compiles every retained project module as Java 25 bytecode. The resulting
-  plugin runs on Java 25 and newer JVMs, including Java 26.0.1.
-- Shades its runtime libraries, including PacketEvents, BoostedYAML, bStats,
-  Adventure, and FoliaLib, so no companion dependency jars are required.
-- Has been compiled with Gradle 9.4.1 and smoke-tested through a complete
-  enable, Paper 26.2 injector selection, and clean shutdown on Paper
-  26.2-29-dev with Java 26.0.1.
+## Compatibility
 
-## Building this fork
+| Component | Target |
+| --- | --- |
+| Server | Paper 26.2 |
+| Paper development bundle | `26.2.build.34-alpha` |
+| Java bytecode | Java 25 |
+| Tested runtime | Paper 26.2 build 56 on Java 26.0.1 |
+| Plugin version | `13.2` |
+| Main command | `/antipopup` |
+| Artifact | `AntiPopup-13.2-j25-mc26.2.jar` |
 
-JDK 25 is required as the Gradle compilation toolchain.
+The active Gradle project includes only `spigot`, `shared`, `nms`, and
+`v26.2`. Older source directories remain for upstream history but are not
+compiled or packaged.
+
+## What It Does
+
+- Marks compatible server-list responses as preventing chat reports.
+- Hides the unsafe-server popup through the applicable server-data and join-game
+  packet flags when `show-popup` is disabled.
+- Cancels chat-session updates and, by default, outgoing chat headers.
+- When `block-chat-reports` is enabled, replaces Paper 26.2 player-chat
+  packets with decorated system-chat packets before they reach each player.
+- Optionally removes the `[Not Secure]` prefix from matching Minecraft server
+  log messages.
+- Can optionally restore clickable URL behavior through its Bukkit chat
+  listener, with the compatibility trade-off documented in the configuration.
+
+AntiPopup does not provide rewards, costs, cooldowns, progression, player data,
+or PlaceholderAPI placeholders.
+
+## Commands
+
+| Command | Sender | Description |
+| --- | --- | --- |
+| `/antipopup` | Player/console | Shows the same friendly overview as `info`. |
+| `/antipopup info` | Player/console | Shows the installed version, starting command, and clickable canonical documentation link. |
+| `/antipopup setup` | Local server console only | Sets `enforce-secure-profile=false` in the configured properties file and restarts when a change is needed. |
+| `/antipopup reload` | Local server console only | Reloads `config.yml`; startup-bound features still require a restart. |
+
+The command permission is `antipopup.commands` and defaults to everyone.
+The setup and reload restrictions are also enforced in code, so granting the
+permission does not expose those operations to players, command blocks, or RCON.
+
+## Documentation
+
+- [Player guide](docs/player-guide.md)
+- [Commands](docs/commands.md)
+- [Permissions](docs/permissions.md)
+- [Configuration](docs/configuration.md)
+- [Installation and updates](docs/installation.md)
+- [Integrations](docs/integrations.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+No placeholders page is included because this project does not implement any
+placeholders.
+
+## Installation Summary
+
+1. Stop the Paper 26.2 server.
+2. Back up `plugins/AntiPopup/config.yml` and `server.properties` when
+   updating an existing installation.
+3. Remove older AntiPopup jars from the server's top-level `plugins/` folder.
+4. Copy `AntiPopup-13.2-j25-mc26.2.jar` into `plugins/`.
+5. Start with Java 25, or the separately verified Java 26.0.1 runtime, and
+   confirm the log contains
+   `[AntiPopup] Hooked on 26.2`.
+
+No companion dependency jar is required. Do not install this build on a proxy or
+on another Paper/Minecraft version.
+
+## Build and Test
+
+JDK 25 is required as the Gradle toolchain:
 
 ```bash
 ./gradlew clean build
 ```
 
-The deployable shaded plugin is written to:
+The normal build runs the focused command tests and writes the deployable shaded
+plugin to:
 
 ```text
 build/libs/AntiPopup-13.2-j25-mc26.2.jar
 ```
 
-## Original project information
+The artifact shades PacketEvents, BoostedYAML, bStats, Adventure support, and
+FoliaLib. The root unshaded jar task is disabled to avoid producing an
+undeployable artifact.
 
-**For faster updates, priority support and a discord role purchase AntiPopup Pro on Polymart.**  
-Click the button below for more details.
+## Persistence, Metrics, and Updates
 
-[<img src="https://images.polymart.org/resource/4921/default.jpg" width="480" alt="Download AntiPopup Pro on Polymart.org" title="Download AntiPopup Pro on Polymart.org">](https://polymart.org/resource/antipopup-pro.4921)
+Persistent project state is limited to `plugins/AntiPopup/config.yml`.
+`/antipopup setup` or `auto-setup` can also modify the configured
+`server.properties` file. There is no database or per-player store.
 
-**What is this plugin?** \
-AntiPopup is a plugin aiming to remove chat reporting system entirely using packets. It also has unique feature - blocks the new annoying popup (below) even if your server doesn't enforce chat reporting (please don't enforce it). \
-My plugin is also the safest to use, chance of breaking a different plugin is unlikely, I'd even say impossible. Note that some plugins might break it, report that to me. \
-![](https://cdn.discordapp.com/attachments/834878536816525344/1002561207603048468/unknown.png)
+bStats metrics are disabled by default. When enabled, AntiPopup uses metrics ID
+`16308` and reports whether ViaVersion is enabled in addition to bStats'
+standard plugin metrics. PacketEvents update checks are disabled.
 
-**How to install?**\
-Plug and play, nothing else for you to do. \
-Optionally you can run **antipopup setup** in console, recommended. \
-If you use viaversion on bungeecord install AntiPopup ViaVersion addon.
+## Verification and Limitations
 
-**Commands** \
-**antipopup setup** - Disables **enforce-secure-profile** in server.properties (console only). \
-**antipopup reload** - Reloads configuration.
+This fork has completed a clean Gradle build and a startup/enable/shutdown smoke
+test on Paper `26.2-56-main@8cd4f47` with Java `26.0.1`. The built JAR contained Java
+25 class files and only the `v26_2` NMS implementation.
 
-**Faq** \
-Q: What if my server runs an older version? \
-A: If you use viaversion and antipopup, 1.19.1+ players will not see popup. \
-Q: Will it work with ViaFabric? \
-A: Popup will be shown for 1.19.2 clients spoofing to 1.19, nothing I can fix on my side.
+`folia-supported: true` is declared and FoliaLib is used for scheduled work,
+but this fork has not completed a dedicated Folia runtime test. ViaVersion client
+translation combinations have not been certified as a compatibility matrix.
 
-**Support Me!** \
-Donations are not required but they help me assign more time to improve the software. After donating message me on discord to add you to supporters list on marketplaces.
+## Source, Support, and License
 
-Available options are: \
-[![liberapay](https://liberapay.com/assets/widgets/donate.svg "")](https://liberapay.com/Kaspian/donate "")
-[![ko-fi](https://i.imgur.com/TUJMO7O.png "")](https://ko-fi.com/kaspiandev "")
+- Fork: [mrfdev/AntiPopup](https://github.com/mrfdev/AntiPopup)
+- Issues: [mrfdev/AntiPopup issues](https://github.com/mrfdev/AntiPopup/issues)
+- Upstream project: [KaspianDev/AntiPopup](https://github.com/KaspianDev/AntiPopup)
 
-**Need Help?** \
-Message me on [matrix](https://matrix.to/#/#future-project:matrix.org) or [discord](https://discord.gg/eak2zA4s6m).
+AntiPopup is distributed under the GNU General Public License v3.0. See
+[LICENSE](LICENSE).

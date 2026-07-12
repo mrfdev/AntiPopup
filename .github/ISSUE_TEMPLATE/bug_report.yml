@@ -2,8 +2,7 @@ name: Bug report
 title: "[BUG] "
 description: Create a report to help us improve
 labels: bug
-assignees:
-  - KaspianDev
+assignees: []
 
 body:
   - type: textarea
@@ -44,8 +43,24 @@ body:
     id: software
     attributes:
       label: Server Software
-      description: What server software are you using? Include build number.
-      placeholder: Spigot (420)
+      description: Which Paper 26.2 build are you using?
+      placeholder: Paper 26.2-56-main@8cd4f47
+    validations:
+      required: true
+  - type: input
+    id: java
+    attributes:
+      label: Java Version
+      description: Include the complete output version, such as 25.0.2 or 26.0.1.
+      placeholder: 26.0.1
+    validations:
+      required: true
+  - type: input
+    id: antipopup
+    attributes:
+      label: AntiPopup Version
+      description: Include the plugin version and jar filename.
+      placeholder: AntiPopup 13.2 / AntiPopup-13.2-j25-mc26.2.jar
     validations:
       required: true
   - type: dropdown
@@ -54,25 +69,17 @@ body:
       label: Server Version
       description: What minecraft version is your server using?
       options:
-        - 1.19
-        - 1.19.1
-        - 1.19.2
-        - 1.19.3
-        - 1.20
-        - 1.20.1
-        - Not Listed
+        - "26.2"
     validations:
       required: true
-  - type: dropdown
-    id: proxy
+  - type: textarea
+    id: clients
     attributes:
-      label: Proxy Type
-      description: What proxy are you using?
-      options:
-        - Bungeecord
-        - Waterfall
-        - Velocity
-        - Other
+      label: Client and Protocol Translation Versions
+      description: List affected Minecraft client versions and exact ViaVersion, ViaBackwards, ViaRewind, or Geyser versions when present.
+      placeholder: Minecraft 26.2; ViaVersion not installed
+    validations:
+      required: false
   - type: textarea
     id: plugins
     attributes:
@@ -82,10 +89,18 @@ body:
       render: bash
     validations:
       required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant AntiPopup Configuration
+      description: Paste only relevant settings. Remove credentials, tokens, private addresses, and other private values first.
+      render: yaml
+    validations:
+      required: false
   - type: input
     id: logs
     attributes:
       label: Server logs
-      description: Paste a link to your latest log.
+      description: Paste a link to the complete relevant log after removing credentials, tokens, private IPs or addresses, and other private values.
     validations:
       required: true
