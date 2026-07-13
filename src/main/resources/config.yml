@@ -1,0 +1,22 @@
+# Collect anonymous bStats data when explicitly enabled?
+bstats: false
+
+# Remove [Not Secure] from matching MinecraftServer INFO log messages?
+filter-not-secure: true
+
+# Run the server.properties setup automatically shortly after startup?
+auto-setup: false
+
+# Convert unfiltered player chat to non-reportable disguised chat and cancel
+# chat-session updates? Filtered messages stay on Paper's original safe path.
+block-chat-reports: true
+
+# Show the unsafe-server popup to players?
+show-popup: false
+
+# Path relative to the Paper server working directory.
+properties-location: server.properties
+
+# Internal one-time notices. Do not edit these during normal operation.
+first-run: true
+ask-bstats: true

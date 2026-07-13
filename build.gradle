@@ -1,55 +1,180 @@
+import java.io.DataInputStream
+import java.nio.charset.StandardCharsets
+import java.util.jar.JarFile
+
 plugins {
     id "java"
     id "com.gradleup.shadow" version "${shadowVer}"
-    id "org.jetbrains.gradle.plugin.idea-ext" version "1.0.1"
+}
+
+group = "com.github.kaspiandev.antipopup"
+version = providers.gradleProperty("pluginVersion").get()
+def expectedPaperTarget = providers.gradleProperty("paperTarget").get()
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "paper"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "codemcReleases"
+        url = "https://repo.codemc.io/repository/maven-releases/"
+    }
 }
 
 dependencies {
-    implementation project(path: ":spigot", configuration: "shadow")
+    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
+    compileOnly "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+
+    implementation("com.github.retrooper:packetevents-spigot:${packetEventsVersion}") {
+        // Paper supplies Adventure. PacketEvents 2.13 supports Paper's Adventure 5.
+        exclude group: "net.kyori"
+    }
+    // Paper exposes Adventure API 5 (including BinaryTagHolder), but not the
+    // implementation NBT module. Bundle the matching module without relocating
+    // its public package so PacketEvents and Paper share one Adventure type system.
+    implementation("net.kyori:adventure-nbt:${adventureNbtVersion}") {
+        transitive = false
+    }
+    implementation "org.bstats:bstats-bukkit:${bStatsVersion}"
+
+    testImplementation platform("org.junit:junit-bom:${junitVersion}")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation "io.papermc.paper:paper-api:${paperApiVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-tasks {
-    build {
-        dependsOn(shadowJar)
-    }
-    jar {
-        enabled = false
-    }
-    shadowJar {
-        archiveFileName.set(project.providers.provider {
-            "AntiPopup-${project.version}-j25-mc26.2.jar"
-        })
-        archiveClassifier = ""
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
-allprojects {
-    group = "com.github.kaspiandev.antipopup"
-    version = "13.2"
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = "UTF-8"
+    options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:removal", "-Werror"])
+}
 
-    repositories {
-        mavenCentral()
-        mavenLocal()
-        maven {
-            name = "spigotmc-repo"
-            url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
-        }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/groups/public/"
-        }
-        maven {
-            name = "No."
-            url = "https://repo.viaversion.com"
-        }
-        maven {
-            name = "codemc"
-            url = "https://repo.codemc.io/repository/maven-public/"
-        }
-        maven {
-            name = "codemc"
-            url = "https://repo.codemc.io/repository/maven-snapshots/"
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+processResources {
+    def props = [version: project.version, paperTarget: expectedPaperTarget]
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
+    filesMatching("plugin.yml") {
+        expand(props)
+    }
+}
+
+jar {
+    enabled = false
+}
+
+shadowJar {
+    archiveFileName = "AntiPopup-${project.version}-j25-mc${expectedPaperTarget}.jar"
+    archiveClassifier = ""
+    mergeServiceFiles()
+
+    relocate "io.github.retrooper.packetevents", "com.github.kaspiandev.antipopup.libs.packetevents.impl"
+    relocate "com.github.retrooper.packetevents", "com.github.kaspiandev.antipopup.libs.packetevents.api"
+    relocate "org.bstats", "com.github.kaspiandev.antipopup.libs.bstats"
+
+    exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
+
+    manifest {
+        attributes(
+                "Implementation-Title": "AntiPopup Paper-only candidate",
+                "Implementation-Version": project.version,
+                "Built-For-Paper": expectedPaperTarget,
+                "Build-Java": "25"
+        )
+    }
+}
+
+assemble {
+    dependsOn shadowJar
+}
+
+def shadowArchive = tasks.named("shadowJar").flatMap { it.archiveFile }
+
+tasks.register("verifyArtifact") {
+    group = "verification"
+    description = "Checks the deployable jar's target, bytecode, and legacy exclusions."
+    dependsOn shadowJar
+    inputs.file(shadowArchive)
+
+    doLast {
+        File archive = inputs.files.singleFile
+        new JarFile(archive).withCloseable { jar ->
+            Set<String> names = jar.entries().collect { it.name } as Set
+            List<String> forbiddenPrefixes = [
+                    "com/github/kaspiandev/antipopup/velocity/",
+                    "com/github/kaspiandev/antipopup/spigot/",
+                    "com/github/kaspiandev/antipopup/nms/",
+                    "net/md_5/bungee/"
+            ]
+
+            forbiddenPrefixes.each { prefix ->
+                if (names.any { it.startsWith(prefix) }) {
+                    throw new GradleException("Legacy content found in deployable jar: ${prefix}")
+                }
+            }
+
+            if (!names.contains("net/kyori/adventure/nbt/CompoundBinaryTag.class")) {
+                throw new GradleException("The Paper-aligned Adventure NBT module is missing")
+            }
+            if (names.contains("net/kyori/adventure/nbt/api/BinaryTagHolder.class")
+                    || names.contains("net/kyori/adventure/text/Component.class")) {
+                throw new GradleException("The deployable jar must use Paper's Adventure API")
+            }
+
+            String brokenAdventurePrefix =
+                    "com/github/kaspiandev/antipopup/libs/adventure/"
+            names.findAll { it.endsWith(".class") }.each { name ->
+                String classFile = new String(
+                        jar.getInputStream(jar.getJarEntry(name)).readAllBytes(),
+                        StandardCharsets.ISO_8859_1)
+                if (classFile.contains(brokenAdventurePrefix)) {
+                    throw new GradleException(
+                            "Found an incompletely relocated Adventure reference in ${name}")
+                }
+            }
+
+            String mainClass = "com/github/kaspiandev/antipopup/paper/AntiPopup.class"
+            def mainEntry = jar.getJarEntry(mainClass)
+            if (mainEntry == null) {
+                throw new GradleException("Paper main class is missing from deployable jar")
+            }
+
+            jar.getInputStream(mainEntry).withCloseable { stream ->
+                DataInputStream input = new DataInputStream(stream)
+                input.skipNBytes(6)
+                int major = input.readUnsignedShort()
+                if (major != 69) {
+                    throw new GradleException("Expected Java 25 class major 69, found ${major}")
+                }
+            }
+
+            String descriptor = jar.getInputStream(jar.getJarEntry("plugin.yml"))
+                    .getText("UTF-8")
+            if (!descriptor.contains("api-version: '${expectedPaperTarget}'")
+                    || !descriptor.contains("main: com.github.kaspiandev.antipopup.paper.AntiPopup")) {
+                throw new GradleException(
+                        "plugin.yml is not the expected Paper ${expectedPaperTarget} descriptor")
+            }
         }
     }
+}
 
+check {
+    dependsOn tasks.named("verifyArtifact")
+}
+
+dependencyLocking {
+    lockAllConfigurations()
 }

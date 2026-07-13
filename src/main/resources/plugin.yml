@@ -1,0 +1,26 @@
+name: AntiPopup
+version: '${version}'
+main: com.github.kaspiandev.antipopup.paper.AntiPopup
+api-version: '${paperTarget}'
+load: POSTWORLD
+# PacketEvents' bundled Paper injector uses these only for safe plugin load order.
+# AntiPopup itself contains no direct hooks for these plugins or proxies.
+softdepend:
+  - ProtocolLib
+  - ProtocolSupport
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+  - Geyser-Spigot
+authors: [ Kaspian, mrfdev ]
+description: Paper-only plugin that hides the unsafe-server popup and limits vanilla chat reporting.
+website: https://docs.1moreblock.com/custom-server-plugins/antipopup/
+commands:
+  antipopup:
+    description: Main AntiPopup command.
+    permission: antipopup.commands
+    usage: /<command> info
+permissions:
+  antipopup.commands:
+    description: Allows AntiPopup command dispatch; administrative actions still require the local console.
+    default: true
