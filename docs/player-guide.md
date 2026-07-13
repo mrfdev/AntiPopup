@@ -62,15 +62,14 @@ AntiPopup does not provide PlaceholderAPI placeholders.
   third-party chat or protocol plugin combination will behave identically.
 - You do not need to run setup or reload commands.
 - If the warning popup or reporting behavior unexpectedly returns, tell staff
-  which client version you use and whether the server is translating it through
-  ViaVersion.
+  which client version you use and whether a protocol translator is involved.
 - Chat formatting may be controlled by other server plugins.
 
 ## Related Features
 
-Paper supplies the server chat implementation. ViaVersion may translate network
-protocols for clients on different versions, but those combinations are managed
-separately from AntiPopup.
+Paper supplies the server chat implementation. A separately managed protocol
+translator may support clients on different versions; AntiPopup has no direct
+hook into one.
 
 ## Technical Documentation
 

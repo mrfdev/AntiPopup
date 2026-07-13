@@ -60,7 +60,7 @@ body:
     attributes:
       label: AntiPopup Version
       description: Include the plugin version and jar filename.
-      placeholder: AntiPopup 13.2 / AntiPopup-13.2-j25-mc26.2.jar
+      placeholder: AntiPopup 13.2-paper-only.1 / AntiPopup-13.2-paper-only.1-j25-mc26.2.jar
     validations:
       required: true
   - type: dropdown

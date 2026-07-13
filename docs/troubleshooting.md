@@ -2,36 +2,35 @@
 
 ## The Plugin Will Not Load
 
-Check all three items:
+Confirm that:
 
 1. The server is Paper 26.2.
-2. The runtime is Java 25 or the separately verified Java 26.0.1.
-3. Only one AntiPopup jar is present in `plugins/`.
+2. The runtime is Java 25 or newer.
+3. Only one AntiPopup JAR is present in `plugins/`.
+4. The file name is `AntiPopup-13.2-paper-only.1-j25-mc26.2.jar`.
 
-`UnsupportedClassVersionError` indicates an older Java runtime; this build uses
-Java 25 class-file version 69.
+`UnsupportedClassVersionError` means the runtime is older than Java 25; this
+candidate uses class-file version 69. This branch no longer contains the old
+`No valid injector found` NMS version switch.
 
-`No valid injector found for the server version!` means PacketEvents did not
-detect exact server version `26.2` while `block-chat-reports` was enabled.
-Other Paper/Minecraft versions are outside this fork's scope.
+## The Popup or Report Protection Returned
 
-## The Popup or Reportable Chat Returned
+- Confirm `show-popup: false` and `block-chat-reports: true`.
+- Run `antipopup reload` from the local console.
+- Confirm startup logged `Initiated embedded PacketEvents for Paper 26.2.`
+- Record the exact Paper build, client version, and any protocol translator.
 
-- Confirm `show-popup: false`.
-- Confirm `block-chat-reports: true`.
-- Restart the server after changing `block-chat-reports`.
-- Look for `[AntiPopup] Hooked on 26.2` during startup.
-- Record the client version and whether ViaVersion, ViaBackwards, ViaRewind, or
-  Geyser is translating its protocol.
+If the log says an unknown chat packet was left unchanged, AntiPopup failed
+safe rather than guessing a packet format. Update PacketEvents on a disposable
+branch and repeat the certification checklist before production use.
 
-`show-popup` is read dynamically and can be refreshed with
-`/antipopup reload`; injector changes require a restart.
+Filtered messages intentionally remain on Paper's original per-recipient packet
+path. That is a privacy safeguard, not a failure to process chat.
 
 ## Info Is Not Available to a Player
 
 `antipopup.commands` defaults to everyone. Check whether a permissions plugin
-explicitly denies it. The command should return the installed version and a
-clickable link to:
+explicitly denies it. `/antipopup info` should include a clickable link to:
 
 ```text
 https://docs.1moreblock.com/custom-server-plugins/antipopup/
@@ -39,46 +38,44 @@ https://docs.1moreblock.com/custom-server-plugins/antipopup/
 
 ## Setup or Reload Does Nothing
 
-Both operations require Bukkit's local server console. They intentionally reject
-players, command blocks, and remote-console senders.
+Both operations require the local server console. Players, command blocks, and
+RCON are intentionally rejected.
 
-`setup` only requests a restart when `enforce-secure-profile` was true and
-needed to be changed. Verify `properties-location` if it cannot find the
-expected file.
+`setup` requests a restart only when `enforce-secure-profile` was missing or not
+already false. Check that `properties-location` is relative to the server root
+and points to the intended file.
 
 ## A Reloaded Setting Did Not Take Effect
 
-Only `show-popup` and `send-header` are read dynamically by the packet
-listener. Restart after changing startup-bound settings such as
-`block-chat-reports`, `clickable-urls`, `filter-not-secure`, metrics, or
-the properties path.
+`block-chat-reports`, `show-popup`, and the properties path use the new snapshot
+after reload. Restart after changing `bstats` or `filter-not-secure`.
+`auto-setup` is evaluated on the next startup.
 
-## Chat Formatting or Another Chat Plugin Breaks
+Old keys including `send-header`, `clickable-urls`, `setup-mode`, and
+`experimental-mode` are ignored by this branch.
 
-Keep `clickable-urls: false` unless the full chat stack has been tested. When
-enabled, AntiPopup takes over Bukkit chat delivery and can conflict with another
-formatter.
+## Java 26 Final-Field Warning
 
-## Java 26 Prints a Reflection Warning
+PacketEvents 2.13.0 reflectively attaches to Paper's network channel list. Java
+26.0.1 permits this but prints a warning that a future Java release may block
+it. The candidate completed startup, status handling, commands, reload, and clean
+shutdown despite the warning.
 
-The captured terminal output from the verified Java 26.0.1 smoke test logged a
-final-field reflection warning from the bundled packet stack, but AntiPopup
-still enabled, selected the Paper 26.2
-injector, reached Paper's ready state, and shut down cleanly. Treat a warning
-separately from an actual enable failure and retain the complete startup log when
-reporting it.
+To explicitly authorize this access on Java 26, add the following JVM argument
+before `-jar`:
 
-## Configuration Problems After an Update
+```text
+--enable-final-field-mutation=ALL-UNNAMED
+```
 
-1. Stop the server.
-2. Back up `plugins/AntiPopup/config.yml`.
-3. Compare it with the defaults documented in
-   [Configuration](configuration.md).
-4. Keep `config-version` under BoostedYAML's control.
-5. Start again and inspect the complete AntiPopup startup section.
+Treat a later JDK that actually blocks the operation as a failed certification:
+update PacketEvents or the server launch policy on a disposable branch before
+production use.
 
-For reproducible Paper 26.2 issues, use the
-[mrfdev/AntiPopup issue tracker](https://github.com/mrfdev/AntiPopup/issues) and
-include the Paper build, Java version, AntiPopup version, plugin list,
-configuration with credentials, tokens, private addresses, and other private
-values removed, plus a similarly sanitized complete log link.
+## Reporting a Reproducible Problem
+
+Use the [mrfdev/AntiPopup issue tracker](https://github.com/mrfdev/AntiPopup/issues)
+and include the Paper build, Java version, candidate version/JAR name, plugin
+list, client and protocol-translation versions, relevant sanitized
+configuration, and a sanitized complete log. Remove credentials, tokens,
+private addresses, and other private values first.
