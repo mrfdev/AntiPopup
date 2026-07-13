@@ -8,8 +8,15 @@ plugins {
 }
 
 group = "com.github.kaspiandev.antipopup"
-version = providers.gradleProperty("pluginVersion").get()
+def semanticVersion = providers.gradleProperty("pluginVersion").get()
+def buildNumber = providers.gradleProperty("pluginBuild").get()
+if (!(buildNumber ==~ /\d{3}/)) {
+    throw new GradleException("pluginBuild must contain exactly three digits")
+}
+version = "${semanticVersion}-${buildNumber}"
 def expectedPaperTarget = providers.gradleProperty("paperTarget").get()
+def expectedArchiveName =
+        "1MB-AntiPopup-v${version}-j25-${expectedPaperTarget}.jar"
 
 repositories {
     mavenCentral()
@@ -76,7 +83,7 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = "AntiPopup-${project.version}-j25-mc${expectedPaperTarget}.jar"
+    archiveFileName = expectedArchiveName
     archiveClassifier = ""
     mergeServiceFiles()
 
@@ -110,6 +117,10 @@ tasks.register("verifyArtifact") {
 
     doLast {
         File archive = inputs.files.singleFile
+        if (archive.name != expectedArchiveName) {
+            throw new GradleException(
+                    "Expected artifact ${expectedArchiveName}, found ${archive.name}")
+        }
         new JarFile(archive).withCloseable { jar ->
             Set<String> names = jar.entries().collect { it.name } as Set
             List<String> forbiddenPrefixes = [

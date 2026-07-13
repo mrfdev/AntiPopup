@@ -37,8 +37,8 @@ without disturbing the working version.
 | Paper API | `26.2.build.56-alpha` |
 | Java bytecode | Java 25 (class version 69) |
 | Runtime | Paper `26.2-56-main@8cd4f47` on Java 26.0.1 verified |
-| Plugin version | `13.2-paper-only.1` |
-| Artifact | `AntiPopup-13.2-paper-only.1-j25-mc26.2.jar` |
+| Plugin version | `14.0.0-003` |
+| Artifact | `1MB-AntiPopup-v14.0.0-003-j25-26.2.jar` |
 
 No proxy or companion plugin is required. The embedded PacketEvents Paper/Bukkit
 adapter retains `spigot` in its upstream artifact and class names; that is an
@@ -85,8 +85,12 @@ The build runs unit tests and `verifyArtifact`, then writes only the shaded,
 deployable plugin to:
 
 ```text
-build/libs/AntiPopup-13.2-paper-only.1-j25-mc26.2.jar
+build/libs/1MB-AntiPopup-v14.0.0-003-j25-26.2.jar
 ```
+
+`pluginVersion` and the required three-digit `pluginBuild` live in
+`gradle.properties`. Future artifacts keep the pattern
+`1MB-AntiPopup-v<version>-<build>-j<java>-<paper>.jar`.
 
 PacketEvents 2.13.0 and bStats 3.2.1 are relocated inside the JAR. The matching
 Adventure NBT 5.2.0 implementation is bundled while Paper supplies Adventure's

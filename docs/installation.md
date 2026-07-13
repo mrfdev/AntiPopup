@@ -4,7 +4,7 @@
 
 - Paper 26.2.
 - Java 25 or newer. The plugin contains Java 25 bytecode; Java 26.0.1 is verified.
-- `AntiPopup-13.2-paper-only.1-j25-mc26.2.jar` from this candidate branch.
+- `1MB-AntiPopup-v14.0.0-003-j25-26.2.jar` from this candidate branch.
 
 The plugin compiles against Paper API `26.2.build.56-alpha`. It is standalone:
 do not install a separate PacketEvents jar and do not deploy this build to
@@ -66,7 +66,7 @@ Never leave multiple AntiPopup builds in `plugins/`.
 The build requires a JDK 25 toolchain and produces:
 
 ```text
-build/libs/AntiPopup-13.2-paper-only.1-j25-mc26.2.jar
+build/libs/1MB-AntiPopup-v14.0.0-003-j25-26.2.jar
 ```
 
 The build includes unit tests and final-JAR validation. See

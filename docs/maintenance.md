@@ -11,6 +11,8 @@ dependencies, strict deprecation checks, unit tests, and final-JAR validation.
 2. Create a new disposable branch from that commit.
 3. Set the exact released `paperApiVersion` and its `paperTarget` in
    `gradle.properties`.
+   Increment the three-digit `pluginBuild` for each candidate and change
+   `pluginVersion` only for an intentional release-version change.
 4. Refresh the dependency lock after reviewing the resolved change:
 
    ```bash

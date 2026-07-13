@@ -7,7 +7,7 @@ Confirm that:
 1. The server is Paper 26.2.
 2. The runtime is Java 25 or newer.
 3. Only one AntiPopup JAR is present in `plugins/`.
-4. The file name is `AntiPopup-13.2-paper-only.1-j25-mc26.2.jar`.
+4. The file name is `1MB-AntiPopup-v14.0.0-003-j25-26.2.jar`.
 
 `UnsupportedClassVersionError` means the runtime is older than Java 25; this
 candidate uses class-file version 69. This branch no longer contains the old

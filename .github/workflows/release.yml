@@ -27,7 +27,7 @@ jobs:
         run: ./gradlew clean build --warning-mode all
 
       - name: Create checksum
-        run: sha256sum build/libs/AntiPopup-*.jar > build/libs/SHA256SUMS
+        run: sha256sum build/libs/1MB-AntiPopup-*.jar > build/libs/SHA256SUMS
 
       - name: Create draft GitHub release
         env:
@@ -35,7 +35,7 @@ jobs:
         run: |
           short_sha="${GITHUB_SHA:0:7}"
           gh release create "candidate-${short_sha}" \
-            build/libs/AntiPopup-*.jar \
+            build/libs/1MB-AntiPopup-*.jar \
             build/libs/SHA256SUMS \
             --draft \
             --generate-notes \

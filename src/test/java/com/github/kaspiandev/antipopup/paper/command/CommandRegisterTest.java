@@ -22,12 +22,12 @@ class CommandRegisterTest {
     void noArgumentsShowsPaperCandidateInfoAndClickableDocs() {
         RecordingActions actions = new RecordingActions();
         RecordingSender sender = RecordingSender.commandSender();
-        CommandRegister command = new CommandRegister("13.2-paper-only.1", actions);
+        CommandRegister command = new CommandRegister("14.0.0-003", actions);
 
         assertTrue(command.onCommand(sender.proxy(), null, "antipopup", new String[0]));
 
         String output = sender.plainOutput();
-        assertTrue(output.contains("AntiPopup v13.2-paper-only.1"));
+        assertTrue(output.contains("AntiPopup v14.0.0-003"));
         assertTrue(output.contains("/antipopup info"));
         assertTrue(output.contains(CommandRegister.DOCS_URL));
         ClickEvent<?> clickEvent = sender.components().stream()
