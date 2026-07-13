@@ -20,8 +20,8 @@ Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/cus
 | Artifact | `AntiPopup-13.2-j25-mc26.2.jar` |
 
 The active Gradle project includes only `spigot`, `shared`, `nms`, and
-`v26.2`. Older source directories remain for upstream history but are not
-compiled or packaged.
+`v26.2`. Inactive proxy and historical server implementations have been
+removed from this Paper-only branch.
 
 ## What It Does
 
