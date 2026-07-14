@@ -31,8 +31,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
-    compileOnly "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+    compileOnly("io.papermc.paper:paper-api:${paperApiVersion}") {
+        exclude group: "org.apache.logging.log4j"
+    }
 
     implementation("com.github.retrooper:packetevents-spigot:${packetEventsVersion}") {
         // Paper supplies Adventure. PacketEvents 2.13 supports Paper's Adventure 5.
@@ -44,13 +45,6 @@ dependencies {
     implementation("net.kyori:adventure-nbt:${adventureNbtVersion}") {
         transitive = false
     }
-    implementation "org.bstats:bstats-bukkit:${bStatsVersion}"
-
-    testImplementation platform("org.junit:junit-bom:${junitVersion}")
-    testImplementation "org.junit.jupiter:junit-jupiter"
-    testImplementation "io.papermc.paper:paper-api:${paperApiVersion}"
-    testImplementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 java {
@@ -63,10 +57,6 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 25
     options.encoding = "UTF-8"
     options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:removal", "-Werror"])
-}
-
-tasks.withType(Test).configureEach {
-    useJUnitPlatform()
 }
 
 processResources {
@@ -87,10 +77,15 @@ shadowJar {
     archiveClassifier = ""
     mergeServiceFiles()
 
+    // PacketEvents 2.13 unconditionally constructs its bundled bStats service.
+    // Rewrite only those three linkage types to inert local shims, then omit the
+    // complete telemetry implementation from the standalone artifact.
+    relocate "io.github.retrooper.packetevents.bstats.bukkit.Metrics", "com.github.kaspiandev.antipopup.paper.compat.packetevents.NoOpMetrics"
+    relocate "io.github.retrooper.packetevents.bstats.charts.CustomChart", "com.github.kaspiandev.antipopup.paper.compat.packetevents.NoOpChart"
+    relocate "io.github.retrooper.packetevents.bstats.charts.SimplePie", "com.github.kaspiandev.antipopup.paper.compat.packetevents.NoOpSimplePie"
     relocate "io.github.retrooper.packetevents", "com.github.kaspiandev.antipopup.libs.packetevents.impl"
     relocate "com.github.retrooper.packetevents", "com.github.kaspiandev.antipopup.libs.packetevents.api"
-    relocate "org.bstats", "com.github.kaspiandev.antipopup.libs.bstats"
-
+    exclude "io/github/retrooper/packetevents/bstats/**"
     exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
 
     manifest {
@@ -111,7 +106,7 @@ def shadowArchive = tasks.named("shadowJar").flatMap { it.archiveFile }
 
 tasks.register("verifyArtifact") {
     group = "verification"
-    description = "Checks the deployable jar's target, bytecode, and legacy exclusions."
+    description = "Checks the deployable jar's target, bytecode, and removed-feature exclusions."
     dependsOn shadowJar
     inputs.file(shadowArchive)
 
@@ -136,6 +131,57 @@ tasks.register("verifyArtifact") {
                 }
             }
 
+            if (names.any { it.contains("/bstats/") }) {
+                throw new GradleException("bStats implementation found in deployable jar")
+            }
+            String forbiddenLog4jPrefix = "org/apache/logging/log4j/"
+            if (names.any { it.startsWith(forbiddenLog4jPrefix) }) {
+                throw new GradleException("Log4j implementation found in deployable jar")
+            }
+            List<String> metricsShims = [
+                    "com/github/kaspiandev/antipopup/paper/compat/packetevents/NoOpMetrics.class",
+                    "com/github/kaspiandev/antipopup/paper/compat/packetevents/NoOpChart.class",
+                    "com/github/kaspiandev/antipopup/paper/compat/packetevents/NoOpSimplePie.class"
+            ]
+            if (!names.containsAll(metricsShims)) {
+                throw new GradleException("PacketEvents metrics suppression shims are missing")
+            }
+            String paperPluginPrefix =
+                    "com/github/kaspiandev/antipopup/paper/"
+            Set<String> expectedPaperClasses = ([
+                    "com/github/kaspiandev/antipopup/paper/AntiPopup.class",
+                    "com/github/kaspiandev/antipopup/paper/listener/PacketEventsListener.class"
+            ] + metricsShims) as Set
+            Set<String> actualPaperClasses = names.findAll {
+                it.startsWith(paperPluginPrefix) && it.endsWith(".class")
+            } as Set
+            if (actualPaperClasses != expectedPaperClasses) {
+                Set<String> missing = expectedPaperClasses.findAll {
+                    !actualPaperClasses.contains(it)
+                } as Set
+                Set<String> unexpected = actualPaperClasses.findAll {
+                    !expectedPaperClasses.contains(it)
+                } as Set
+                throw new GradleException(
+                        "Unexpected AntiPopup class surface; missing=${missing}, unexpected=${unexpected}")
+            }
+            String packetEventsBuilder =
+                    "com/github/kaspiandev/antipopup/libs/packetevents/impl/factory/spigot/SpigotPacketEventsBuilder\$1.class"
+            def packetEventsBuilderEntry = jar.getJarEntry(packetEventsBuilder)
+            if (packetEventsBuilderEntry == null) {
+                throw new GradleException("The embedded PacketEvents builder is missing")
+            }
+            String packetEventsBuilderBytes = new String(
+                    jar.getInputStream(packetEventsBuilderEntry).readAllBytes(),
+                    StandardCharsets.ISO_8859_1)
+            metricsShims.each { shim ->
+                String internalName = shim.substring(0, shim.length() - ".class".length())
+                if (!packetEventsBuilderBytes.contains(internalName)) {
+                    throw new GradleException(
+                            "PacketEvents metrics linkage was not redirected to ${internalName}")
+                }
+            }
+
             if (!names.contains("net/kyori/adventure/nbt/CompoundBinaryTag.class")) {
                 throw new GradleException("The Paper-aligned Adventure NBT module is missing")
             }
@@ -146,6 +192,20 @@ tasks.register("verifyArtifact") {
 
             String brokenAdventurePrefix =
                     "com/github/kaspiandev/antipopup/libs/adventure/"
+            List<String> forbiddenOwnMarkers = [
+                    "org/bukkit/command/",
+                    "org/bukkit/configuration/",
+                    "getCommand",
+                    "getConfig",
+                    "reloadConfig",
+                    "saveDefaultConfig",
+                    "server.properties",
+                    "enforce-secure-profile",
+                    "ServerPropertiesService",
+                    "CommandRegister",
+                    "APConfig",
+                    "PluginSettings"
+            ]
             names.findAll { it.endsWith(".class") }.each { name ->
                 String classFile = new String(
                         jar.getInputStream(jar.getJarEntry(name)).readAllBytes(),
@@ -154,12 +214,80 @@ tasks.register("verifyArtifact") {
                     throw new GradleException(
                             "Found an incompletely relocated Adventure reference in ${name}")
                 }
+                if (classFile.contains(forbiddenLog4jPrefix)) {
+                    throw new GradleException(
+                            "Found a Log4j linkage in ${name}")
+                }
+                if (name.startsWith(paperPluginPrefix)) {
+                    forbiddenOwnMarkers.each { marker ->
+                        if (classFile.contains(marker)) {
+                            throw new GradleException(
+                                    "Found removed command/config/setup linkage in ${name}: ${marker}")
+                        }
+                    }
+                }
+            }
+
+            if (names.contains("config.yml")) {
+                throw new GradleException("Removed config.yml found in deployable jar")
+            }
+
+            String listenerClass =
+                    "com/github/kaspiandev/antipopup/paper/listener/PacketEventsListener.class"
+            String listenerClassBytes = new String(
+                    jar.getInputStream(jar.getJarEntry(listenerClass)).readAllBytes(),
+                    StandardCharsets.ISO_8859_1)
+            List<String> requiredListenerMarkers = [
+                    "JOIN_GAME",
+                    "isCancelled",
+                    "WrapperPlayServerJoinGame",
+                    "setEnforcesSecureChat"
+            ]
+            requiredListenerMarkers.each { marker ->
+                if (!listenerClassBytes.contains(marker)) {
+                    throw new GradleException(
+                            "Popup-only listener behavior is missing: ${marker}")
+                }
+            }
+            List<String> forbiddenListenerMarkers = [
+                    "SERVER_DATA",
+                    "WrapperPlayServerServerData",
+                    "ClientVersion",
+                    "PluginSettings",
+                    "settingsSupplier",
+                    "CHAT_SESSION_UPDATE",
+                    "CHAT_MESSAGE",
+                    "WrapperPlayServerDisguisedChat",
+                    "onPacketReceive"
+            ]
+            forbiddenListenerMarkers.each { marker ->
+                if (listenerClassBytes.contains(marker)) {
+                    throw new GradleException(
+                            "Removed listener behavior found in artifact: ${marker}")
+                }
             }
 
             String mainClass = "com/github/kaspiandev/antipopup/paper/AntiPopup.class"
             def mainEntry = jar.getJarEntry(mainClass)
             if (mainEntry == null) {
                 throw new GradleException("Paper main class is missing from deployable jar")
+            }
+            String mainClassBytes = new String(
+                    jar.getInputStream(mainEntry).readAllBytes(),
+                    StandardCharsets.ISO_8859_1)
+            List<String> requiredLifecycleMarkers = [
+                    "SpigotPacketEventsBuilder",
+                    "registerListener",
+                    "PacketListenerPriority",
+                    "load",
+                    "init",
+                    "terminate"
+            ]
+            requiredLifecycleMarkers.each { marker ->
+                if (!mainClassBytes.contains(marker)) {
+                    throw new GradleException(
+                            "Embedded PacketEvents lifecycle is missing: ${marker}")
+                }
             }
 
             jar.getInputStream(mainEntry).withCloseable { stream ->
@@ -177,6 +305,14 @@ tasks.register("verifyArtifact") {
                     || !descriptor.contains("main: com.github.kaspiandev.antipopup.paper.AntiPopup")) {
                 throw new GradleException(
                         "plugin.yml is not the expected Paper ${expectedPaperTarget} descriptor")
+            }
+            ["commands", "permissions", "softdepend", "depend", "loadbefore"].each { key ->
+                if (descriptor.readLines().any {
+                    it == "${key}:" || it.startsWith("${key}: ")
+                }) {
+                    throw new GradleException(
+                            "Removed plugin.yml section found in deployable jar: ${key}")
+                }
             }
         }
     }

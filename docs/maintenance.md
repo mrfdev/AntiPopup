@@ -3,12 +3,13 @@
 This project cannot promise compatibility with an API version that has not been
 released. It does provide a low-risk update path: the production code has no
 CraftBukkit/NMS mapping, no exact server-version implementation switch, pinned
-dependencies, strict deprecation checks, unit tests, and final-JAR validation.
+dependencies, strict warning-free compilation, and final-JAR validation.
 
 ## Candidate Workflow for 26.2.1 or 26.3
 
-1. Keep the last certified branch and JAR unchanged.
-2. Create a new disposable branch from that commit.
+1. Keep the exact build `005` rollback JAR and its checksum unchanged until a
+   newer minimalist build completes native-client certification.
+2. Create a new disposable branch from the last certified source commit.
 3. Set the exact released `paperApiVersion` and its `paperTarget` in
    `gradle.properties`.
    Increment the three-digit `pluginBuild` for each candidate and change
@@ -31,15 +32,18 @@ dependencies, strict deprecation checks, unit tests, and final-JAR validation.
 7. Inspect the artifact name, manifest, `plugin.yml`, Java class major, and JAR
    contents. `verifyArtifact` automates the invariants this fork depends on.
 8. Start a clean isolated Paper server using the real candidate JAR. Verify
-   enable, `/antipopup info`, local-console reload, clean disable, and logs.
-9. Test with real clients: status ping, join popup, ordinary signed chat,
-   decorated/unsigned formatting, fully and partially filtered chat, and every
-   protocol translator used in production.
+   enable, plugin listing, clean disable, and logs.
+9. Join directly with the matching native client. Verify the popup is absent and
+   ordinary player chat still works. Do not use proxies, protocol translators,
+   or older clients for certification.
 10. Promote or merge only after all checks pass. Otherwise delete the candidate
     branch and continue deploying the last certified JAR.
 
-Changing only `paperTarget` is not certification. PacketEvents must also
-recognize the released protocol and runtime chat behavior must be exercised.
+Changing only `paperTarget` is not certification. PacketEvents must recognize
+the released protocol, its `JOIN_GAME` wrapper must remain compatible, and the
+native-client join behavior must be exercised. Paper 26.2.1, 26.3, and later
+versions remain uncertified until this checklist passes for their released
+builds.
 
 ## Dependency Maintenance
 
@@ -50,7 +54,9 @@ Do not reintroduce snapshot dependencies into the certified branch.
 
 ## Release Boundary
 
-The `paper-only-26.2` branch is a candidate lane. `master` is the rollback lane
-until the candidate has passed server and player testing and is deliberately
-promoted. Keep the tested JAR checksum with the deployment record so the exact
-binary can be restored.
+Build `003` is the public, archived, unsupported full-feature fallback. Build
+`005` remains the known-good internal 1MoreBlock rollback artifact. Build `006`
+is the current minimalist release certified by its native-client join and chat
+test. Keep all retained JAR checksums with the deployment record, never load
+multiple builds together, and do not apply modern maintenance promises to the
+legacy `003` release.

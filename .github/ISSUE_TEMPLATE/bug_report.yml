@@ -60,7 +60,7 @@ body:
     attributes:
       label: AntiPopup Version
       description: Include the plugin version and jar filename.
-      placeholder: AntiPopup 14.0.0-003 / 1MB-AntiPopup-v14.0.0-003-j25-26.2.jar
+      placeholder: AntiPopup 14.0.0-006 / 1MB-AntiPopup-v14.0.0-006-j25-26.2.jar
     validations:
       required: true
   - type: dropdown
@@ -75,11 +75,11 @@ body:
   - type: textarea
     id: clients
     attributes:
-      label: Client and Protocol Translation Versions
-      description: List affected Minecraft client versions and exact ViaVersion, ViaBackwards, ViaRewind, or Geyser versions when present.
-      placeholder: Minecraft 26.2; ViaVersion not installed
+      label: Native Client Version
+      description: Include the exact official Minecraft client version used for the join test. Protocol translators are unsupported.
+      placeholder: Minecraft 26.2
     validations:
-      required: false
+      required: true
   - type: textarea
     id: plugins
     attributes:
@@ -89,14 +89,6 @@ body:
       render: bash
     validations:
       required: true
-  - type: textarea
-    id: config
-    attributes:
-      label: Relevant AntiPopup Configuration
-      description: Paste only relevant settings. Remove credentials, tokens, private addresses, and other private values first.
-      render: yaml
-    validations:
-      required: false
   - type: input
     id: logs
     attributes:

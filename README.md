@@ -1,8 +1,8 @@
 # AntiPopup
 
 AntiPopup is a standalone Paper plugin that hides Minecraft's unsafe-server
-popup and limits the vanilla reportable-chat path. This `mrfdev` fork is a
-deliberately narrow build for **Paper 26.2** with **Java 25 bytecode**.
+login popup. This `mrfdev` fork is a deliberately narrow build for **Paper
+26.2 and its future Paper update line** with **Java 25 bytecode**.
 
 Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/antipopup/)
 
@@ -10,8 +10,8 @@ Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/cus
 
 - One Paper plugin and one deployable JAR; Velocity, BungeeCord, Spigot server,
   Folia, and historical Minecraft build targets are gone.
-- Compiles against the Paper API and uses Adventure components instead of
-  deprecated Bungee chat components or legacy string messaging.
+- Compiles against the Paper API and contains no legacy command or chat-
+  messaging surface.
 - Contains no CraftBukkit/NMS implementation and no exact-version NMS switch.
   PacketEvents performs the protocol work, which removes the most brittle part
   of a Paper patch or minor-version update.
@@ -20,25 +20,69 @@ Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/cus
   are gone.
 - Treats deprecation and removal warnings as build errors and verifies the final
   JAR's target bytecode, descriptor, main class, and legacy exclusions.
-- Preserves Paper's original per-recipient packet for filtered chat. It never
-  replaces filtered text with an unfiltered copy.
-- Runs after ordinary packet listeners and never recreates a packet that another
-  moderation or privacy listener already cancelled.
+- Runs after ordinary packet listeners and leaves packets already cancelled by
+  another listener untouched.
+- Beginning with build `006`, contains no commands, permissions, configuration,
+  reload path, setup behavior, or persistent plugin state.
 
-The known-good build remains on `master`. Development and runtime certification
-for this rewrite happen on `paper-only-26.2`, so the candidate can be discarded
-without disturbing the working version.
+## Server-Specific Direction After Build 005
+
+Build `005` was confirmed on the 1MoreBlock server: the blue popup stayed hidden
+on join and ordinary player chat continued to work. Its exact JAR is retained
+internally as the known-good rollback artifact.
+
+Starting with build `006`, this fork is intentionally a server-specific tool
+that performs one operation and nothing else. It sets the modern Paper join
+packet's secure-chat flag so the native 26.2 client does not show the popup.
+The following historical upstream scope is deliberately removed moving forward:
+
+- Proxy and protocol-translation integrations, load-order metadata, and
+  networking-platform targets such as Velocity and BungeeCord.
+- Spigot, Folia, legacy NMS modules, old Minecraft releases, and old-client
+  packet formats.
+- Old Java targets; this fork emits Java 25 bytecode and build `006` has passed
+  its server smoke test on the installed Java 26.0.1 runtime.
+- Commands, help, info, permissions, configuration, reload, diagnostics,
+  chat-report features, metrics, console filtering, and server-properties setup.
+
+PacketEvents remains embedded solely as the Paper packet transport needed for
+the one join-packet mutation. Its upstream `spigot` adapter name is an internal
+Bukkit/Paper implementation detail, not a supported Spigot server target.
+AntiPopup itself now owns only five classes. The standalone JAR remains about
+4.5 MiB because PacketEvents' full reflection-driven injector and protocol
+library stays embedded; its generic internals are not supported old-client or
+proxy paths, and aggressively pruning them would risk breaking login injection.
+
+## Release Lines
+
+- **Build `006` — current 1MB modern:** the certified popup-only Paper 26.2
+  build documented by this README. It has no commands, configuration, reload,
+  setup, chat-report modification, metrics, Log4j filter, legacy-client path,
+  proxy integration, or persistent state.
+- **Build `003` — archived full legacy:** the feature-complete Paper-only 26.2
+  fallback. It retains `/antipopup` commands, configuration and reload, the
+  popup toggle, `server.properties` setup/restart handling, chat-report
+  blocking, the status marker, chat-session cancellation, disguised-chat
+  conversion, optional bStats, the Log4j `[Not Secure]` filter, legacy
+  `SERVER_DATA` handling, and translator soft-dependency metadata.
+
+Build `003` is published for users who discover that build `006` deliberately
+removed behavior they still require. It is archived and unsupported, includes
+the features later rejected for the 1MB server, and will not receive future
+Paper updates. Never install builds `003` and `006` at the same time. Downloads
+and checksums are available from the
+[GitHub releases page](https://github.com/mrfdev/AntiPopup/releases).
 
 ## Compatibility
 
-| Component | Candidate target |
+| Component | Certified build |
 | --- | --- |
 | Server | Paper 26.2 |
 | Paper API | `26.2.build.56-alpha` |
 | Java bytecode | Java 25 (class version 69) |
-| Runtime | Paper `26.2-56-main@8cd4f47` on Java 26.0.1 verified |
-| Plugin version | `14.0.0-003` |
-| Artifact | `1MB-AntiPopup-v14.0.0-003-j25-26.2.jar` |
+| Runtime | Paper `26.2-60-main@1cb58fb` on Java 26.0.1 smoke-tested |
+| Plugin version | `14.0.0-006` |
+| Artifact | `1MB-AntiPopup-v14.0.0-006-j25-26.2.jar` |
 
 No proxy or companion plugin is required. The embedded PacketEvents Paper/Bukkit
 adapter retains `spigot` in its upstream artifact and class names; that is an
@@ -46,32 +90,12 @@ implementation detail, not a supported Spigot server target.
 
 ## What It Does
 
-- Marks compatible server-list responses as preventing chat reports when
-  `block-chat-reports` is enabled.
-- Adjusts the applicable server-data and join-game secure-chat flags when
-  `show-popup` is disabled.
-- Cancels chat-session updates and converts unfiltered outgoing player chat to
-  non-reportable disguised chat when report blocking is enabled.
-- Leaves partially or fully filtered messages on Paper's original safe path.
-- Can remove `[Not Secure]` from the matching Minecraft server log message.
-- Can safely set `enforce-secure-profile=false` in `server.properties`, while
-  preserving the rest of the file, and request Paper's native restart.
+- For an uncancelled modern `JOIN_GAME` packet, sets
+  `enforcesSecureChat=true` so the native 26.2 client does not show the popup.
+- Nothing else. Suppression is always enabled while the plugin is installed.
 
 AntiPopup has no rewards, costs, cooldowns, progression, player data, database,
-or PlaceholderAPI placeholders.
-
-## Commands
-
-| Command | Sender | Description |
-| --- | --- | --- |
-| `/antipopup` | Player/console | Shows the same friendly overview as `info`. |
-| `/antipopup info` | Player/console | Shows the installed version, starting command, and clickable canonical documentation link. |
-| `/antipopup setup` | Local server console only | Sets `enforce-secure-profile=false` and requests a restart only when a change is made. |
-| `/antipopup reload` | Local server console only | Reloads the configuration snapshot. |
-
-The permission `antipopup.commands` defaults to everyone. Sender checks in the
-implementation still reject players, command blocks, and RCON for `setup` and
-`reload`.
+PlaceholderAPI placeholders, commands, permissions, or configuration.
 
 ## Build and Test
 
@@ -81,25 +105,27 @@ JDK 25 is the configured Gradle toolchain:
 ./gradlew clean build --warning-mode all
 ```
 
-The build runs unit tests and `verifyArtifact`, then writes only the shaded,
-deployable plugin to:
+The build runs strict compilation and `verifyArtifact`, then writes only the
+shaded, deployable plugin to:
 
 ```text
-build/libs/1MB-AntiPopup-v14.0.0-003-j25-26.2.jar
+build/libs/1MB-AntiPopup-v14.0.0-006-j25-26.2.jar
 ```
 
 `pluginVersion` and the required three-digit `pluginBuild` live in
 `gradle.properties`. Future artifacts keep the pattern
 `1MB-AntiPopup-v<version>-<build>-j<java>-<paper>.jar`.
 
-PacketEvents 2.13.0 and bStats 3.2.1 are relocated inside the JAR. The matching
-Adventure NBT 5.2.0 implementation is bundled while Paper supplies Adventure's
-API, keeping Paper and PacketEvents on one compatible component type system.
+PacketEvents 2.13.0 is relocated inside the JAR. The matching Adventure NBT
+5.2.0 implementation is bundled while Paper supplies Adventure's API, keeping
+Paper and PacketEvents on one compatible component type system.
+PacketEvents' bundled bStats implementation is excluded, and its hard-coded
+metrics bootstrap is linked to inert local compatibility shims.
 
-The strict build currently runs 19 tests. An isolated runtime test also verified
-startup, `/antipopup info`, reload, setup's already-configured path, plugin
-listing, a real status-protocol response with `preventsChatReports: true`, and
-clean disable on Paper 26.2 build 56 with Java 26.0.1.
+The strict build runs its artifact checks. An isolated runtime test verifies
+startup, plugin listing, and clean disable on Paper 26.2 build 60 with Java
+26.0.1. Build `006` also passed its native 26.2 client join and ordinary-chat
+test; every later candidate must repeat that test.
 
 ## Future Paper Updates
 
@@ -107,7 +133,8 @@ No project can guarantee compatibility with an unreleased Paper API. This fork
 instead removes the known exact-version/NMS failure point and keeps a repeatable
 certification path. For 26.2.1 or 26.3, make another disposable branch, update
 `paperApiVersion` and `paperTarget` in `gradle.properties`, refresh the lockfile,
-run the strict build, and complete an isolated server/chat test before merging.
+run the strict build, and complete an isolated server and client-login test
+before merging.
 
 The complete checklist is in [Maintaining Paper compatibility](docs/maintenance.md).
 
@@ -120,24 +147,20 @@ a later JDK or PacketEvents release.
 ## Documentation
 
 - [Player guide](docs/player-guide.md)
-- [Commands](docs/commands.md)
-- [Permissions](docs/permissions.md)
-- [Configuration](docs/configuration.md)
 - [Installation and updates](docs/installation.md)
 - [Integrations](docs/integrations.md)
 - [Maintaining Paper compatibility](docs/maintenance.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
-## Persistence, Metrics, and Privacy
+## Persistence and Privacy
 
-Persistent project state is limited to `plugins/AntiPopup/config.yml`.
-`/antipopup setup` or `auto-setup` can also update the configured
-`server.properties` file. bStats metrics ID `16308` is disabled by default and
-starts only when explicitly enabled. PacketEvents update checks are disabled.
+AntiPopup has no configuration or persistent plugin state. PacketEvents update
+checks are disabled and no metrics service is started.
 
-The isolated test did not simulate two real signed-chat clients or a moderation
-plugin. Player chat, per-recipient filtering, and production protocol translators
-still require the real-client certification steps in `docs/maintenance.md`.
+The isolated test does not replace a real-client login test. The production
+native 26.2 client completed the build `006` certification steps in
+`docs/maintenance.md`; protocol translators and older clients remain out of
+scope for the modern release.
 
 ## Source, Support, and License
 
