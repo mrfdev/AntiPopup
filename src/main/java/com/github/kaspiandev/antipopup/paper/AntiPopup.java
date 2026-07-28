@@ -4,6 +4,9 @@ import com.github.kaspiandev.antipopup.paper.listener.PacketEventsListener;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class AntiPopup extends JavaPlugin {
@@ -27,6 +30,7 @@ public final class AntiPopup extends JavaPlugin {
         PacketEvents.getAPI().init();
         getLogger().info("Initiated embedded PacketEvents for Paper "
                 + PacketEvents.getAPI().getServerManager().getVersion().getReleaseName() + ".");
+        logRuntimeMetadata();
     }
 
     @Override
@@ -36,6 +40,25 @@ public final class AntiPopup extends JavaPlugin {
             packetEventsLoaded = false;
             getLogger().info("Disabled embedded PacketEvents.");
         }
+    }
+
+    private void logRuntimeMetadata() {
+        Properties metadata = new Properties();
+        try (InputStream input = getResource("META-INF/antipopup-release.properties")) {
+            if (input == null) {
+                throw new IllegalStateException("Embedded release metadata is missing.");
+            }
+            metadata.load(input);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read embedded release metadata.", exception);
+        }
+
+        getLogger().info("AntiPopup " + getPluginMeta().getVersion()
+                + " [artifact=" + metadata.getProperty("artifactName")
+                + ", compiledPaperApi=" + metadata.getProperty("paperApiVersion")
+                + ", javaTarget=" + metadata.getProperty("javaTarget")
+                + "] running on " + getServer().getVersion()
+                + " with Java " + Runtime.version() + ".");
     }
 
 }

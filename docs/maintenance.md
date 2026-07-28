@@ -12,12 +12,21 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 2. Create a new disposable branch from the last certified source commit.
 3. Set the exact released `paperApiVersion` and its `paperTarget` in
    `gradle.properties`.
-   Increment the three-digit `pluginBuild` for each candidate and change
-   `pluginVersion` only for an intentional release-version change.
+   Treat that file as the release source of truth: increment the semantic patch
+   version and three-digit build number once for a compatibility release, then
+   update the exact Paper build, channel, JAR checksum, and verified JDKs there.
 4. Refresh the dependency lock after reviewing the resolved change:
 
    ```bash
    ./gradlew dependencies --write-locks
+   ```
+
+   Verify that the maintained server JAR still matches the canonical filename
+   and Paper API checksum:
+
+   ```bash
+   ./gradlew verifyMaintainedPaperJar \
+     -PpaperJarPath=/Users/floris/Projects/Codex/servers/cache/Paper-26.2/Paper-26.2.jar
    ```
 
 5. Run the strict build:
@@ -26,6 +35,9 @@ dependencies, strict warning-free compilation, and final-JAR validation.
    ./gradlew clean build --warning-mode all
    ```
 
+   Run `./gradlew syncReleaseDocs` whenever the canonical release facts change.
+   CI and release automation read the same facts through
+   `./gradlew -q printReleaseMetadata`; do not hardcode a candidate JAR name.
 6. Review every source/build deprecation. Java compilation uses
    `-Xlint:deprecation`, `-Xlint:removal`, and `-Werror`, so deprecated API use
    cannot silently enter a successful build.
@@ -50,13 +62,17 @@ builds.
 `gradle.lockfile` makes local and CI resolution reproducible. Dependency and
 GitHub Actions update proposals are automated with Dependabot, but each proposed
 PacketEvents or Paper change still requires the full build and runtime checklist.
-Do not reintroduce snapshot dependencies into the certified branch.
+Do not reintroduce snapshot dependencies into the certified branch. The normal
+`check` task verifies the lockfile, generated JAR metadata, manifest,
+`plugin.yml`, Java class version, and marker-bounded current-release
+documentation against `gradle.properties`.
 
 ## Release Boundary
 
 Build `003` is the public, archived, unsupported full-feature fallback. Build
-`005` remains the known-good internal 1MoreBlock rollback artifact. Build `006`
-is the current minimalist release certified by its native-client join and chat
-test. Keep all retained JAR checksums with the deployment record, never load
-multiple builds together, and do not apply modern maintenance promises to the
-legacy `003` release.
+`005` remains an earlier internal rollback artifact. Build `006` is the known-
+live minimalist rollback certified by its native-client join and chat test.
+Build `007` is the stable Paper 26.2 compatibility release; promote it to the
+new live rollback only after the normal staging client check. Keep all retained
+JAR checksums with the deployment record, never load multiple builds together,
+and do not apply modern maintenance promises to legacy build `003`.

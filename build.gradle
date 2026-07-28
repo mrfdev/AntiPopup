@@ -1,6 +1,12 @@
 import java.io.DataInputStream
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import java.util.HexFormat
+import java.util.Locale
+import java.util.Properties
 import java.util.jar.JarFile
+import java.util.regex.Matcher
+import org.gradle.api.tasks.WriteProperties
 
 plugins {
     id "java"
@@ -10,13 +16,61 @@ plugins {
 group = "com.github.kaspiandev.antipopup"
 def semanticVersion = providers.gradleProperty("pluginVersion").get()
 def buildNumber = providers.gradleProperty("pluginBuild").get()
+if (!(semanticVersion ==~ /\d+\.\d+\.\d+/)) {
+    throw new GradleException("pluginVersion must be a semantic version")
+}
 if (!(buildNumber ==~ /\d{3}/)) {
     throw new GradleException("pluginBuild must contain exactly three digits")
 }
-version = "${semanticVersion}-${buildNumber}"
+def releaseVersion = "${semanticVersion}-${buildNumber}"
+version = releaseVersion
 def expectedPaperTarget = providers.gradleProperty("paperTarget").get()
+def expectedPaperApi = providers.gradleProperty("paperApiVersion").get()
+def expectedPaperBuild = providers.gradleProperty("paperBuild").get()
+def expectedPaperChannel = providers.gradleProperty("paperChannel").get()
+def expectedPaperJarName = providers.gradleProperty("paperJarName").get()
+def expectedPaperJarSha256 = providers.gradleProperty("paperJarSha256").get()
+def javaTarget = providers.gradleProperty("javaTarget").get().toInteger()
+def buildJdkVersion = providers.gradleProperty("buildJdkVersion").get()
+def runtimeJdk25Version = providers.gradleProperty("runtimeJdk25Version").get()
+def runtimeJdk26Version = providers.gradleProperty("runtimeJdk26Version").get()
+def expectedPaperApiFromRelease =
+        "${expectedPaperTarget}.build.${expectedPaperBuild}-${expectedPaperChannel.toLowerCase(Locale.ROOT)}"
+if (expectedPaperApi != expectedPaperApiFromRelease) {
+    throw new GradleException(
+            "paperApiVersion must match release metadata: ${expectedPaperApiFromRelease}")
+}
+if (expectedPaperChannel != "STABLE") {
+    throw new GradleException("Certified releases must use the STABLE Paper channel")
+}
+if (expectedPaperJarName != "Paper-${expectedPaperTarget}.jar") {
+    throw new GradleException("paperJarName must use Paper-{version}.jar")
+}
+if (!(expectedPaperJarSha256 ==~ /[0-9a-f]{64}/)) {
+    throw new GradleException("paperJarSha256 must be a lowercase SHA-256")
+}
+if (javaTarget != 25) {
+    throw new GradleException("AntiPopup must continue to emit Java 25 bytecode")
+}
 def expectedArchiveName =
-        "1MB-AntiPopup-v${version}-j25-${expectedPaperTarget}.jar"
+        "1MB-AntiPopup-v${version}-j${javaTarget}-${expectedPaperTarget}.jar"
+def expectedClassMajor = javaTarget + 44
+def releaseFacts = [
+        artifactName       : expectedArchiveName,
+        buildJdkVersion    : buildJdkVersion,
+        buildNumber        : buildNumber,
+        javaTarget         : javaTarget.toString(),
+        paperApiVersion    : expectedPaperApi,
+        paperBuild         : expectedPaperBuild,
+        paperChannel       : expectedPaperChannel,
+        paperJarName       : expectedPaperJarName,
+        paperJarSha256     : expectedPaperJarSha256,
+        paperTarget        : expectedPaperTarget,
+        runtimeJdk25Version: runtimeJdk25Version,
+        runtimeJdk26Version: runtimeJdk26Version,
+        semanticVersion    : semanticVersion,
+        version            : releaseVersion
+]
 
 repositories {
     mavenCentral()
@@ -49,23 +103,39 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(javaTarget)
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 25
+    options.release = javaTarget
     options.encoding = "UTF-8"
     options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:removal", "-Werror"])
 }
 
 processResources {
-    def props = [version: project.version, paperTarget: expectedPaperTarget]
+    def props = [version: releaseVersion, paperTarget: expectedPaperTarget]
     inputs.properties(props)
     filteringCharset = "UTF-8"
     filesMatching("plugin.yml") {
         expand(props)
     }
+}
+
+def generatedReleaseMetadataDir = layout.buildDirectory.dir("generated/releaseMetadata")
+def generateReleaseMetadata = tasks.register("generateReleaseMetadata", WriteProperties) {
+    group = "build"
+    description = "Generates the release facts embedded in the deployable JAR."
+    destinationFile = generatedReleaseMetadataDir.map {
+        it.file("META-INF/antipopup-release.properties")
+    }
+    comment = "Generated from gradle.properties; do not edit."
+    releaseFacts.each { key, value -> property(key, value) }
+}
+
+sourceSets.main.resources.srcDir(generatedReleaseMetadataDir)
+tasks.named("processResources") {
+    dependsOn generateReleaseMetadata
 }
 
 jar {
@@ -90,10 +160,14 @@ shadowJar {
 
     manifest {
         attributes(
-                "Implementation-Title": "AntiPopup Paper-only candidate",
-                "Implementation-Version": project.version,
+                "Implementation-Title": "1MB AntiPopup",
+                "Implementation-Version": releaseVersion,
+                "Artifact-Name": expectedArchiveName,
                 "Built-For-Paper": expectedPaperTarget,
-                "Build-Java": "25"
+                "Compiled-Paper-API": expectedPaperApi,
+                "Paper-Build": expectedPaperBuild,
+                "Paper-Channel": expectedPaperChannel,
+                "Build-Java": javaTarget.toString()
         )
     }
 }
@@ -279,6 +353,8 @@ tasks.register("verifyArtifact") {
                     "SpigotPacketEventsBuilder",
                     "registerListener",
                     "PacketListenerPriority",
+                    "META-INF/antipopup-release.properties",
+                    "getPluginMeta",
                     "load",
                     "init",
                     "terminate"
@@ -294,14 +370,16 @@ tasks.register("verifyArtifact") {
                 DataInputStream input = new DataInputStream(stream)
                 input.skipNBytes(6)
                 int major = input.readUnsignedShort()
-                if (major != 69) {
-                    throw new GradleException("Expected Java 25 class major 69, found ${major}")
+                if (major != expectedClassMajor) {
+                    throw new GradleException(
+                            "Expected Java ${javaTarget} class major ${expectedClassMajor}, found ${major}")
                 }
             }
 
             String descriptor = jar.getInputStream(jar.getJarEntry("plugin.yml"))
                     .getText("UTF-8")
             if (!descriptor.contains("api-version: '${expectedPaperTarget}'")
+                    || !descriptor.contains("version: '${releaseVersion}'")
                     || !descriptor.contains("main: com.github.kaspiandev.antipopup.paper.AntiPopup")) {
                 throw new GradleException(
                         "plugin.yml is not the expected Paper ${expectedPaperTarget} descriptor")
@@ -314,12 +392,200 @@ tasks.register("verifyArtifact") {
                             "Removed plugin.yml section found in deployable jar: ${key}")
                 }
             }
+
+            def metadataEntry = jar.getJarEntry("META-INF/antipopup-release.properties")
+            if (metadataEntry == null) {
+                throw new GradleException("Generated release metadata is missing")
+            }
+            Properties embeddedReleaseFacts = new Properties()
+            jar.getInputStream(metadataEntry).withCloseable {
+                embeddedReleaseFacts.load(it)
+            }
+            releaseFacts.each { key, value ->
+                if (embeddedReleaseFacts.getProperty(key) != value.toString()) {
+                    throw new GradleException(
+                            "Embedded release metadata drift for ${key}: "
+                                    + "${embeddedReleaseFacts.getProperty(key)} != ${value}")
+                }
+            }
+
+            def manifestAttributes = jar.manifest.mainAttributes
+            Map<String, String> expectedManifest = [
+                    "Implementation-Title"  : "1MB AntiPopup",
+                    "Implementation-Version": releaseVersion,
+                    "Artifact-Name"         : expectedArchiveName,
+                    "Built-For-Paper"       : expectedPaperTarget,
+                    "Compiled-Paper-API"    : expectedPaperApi,
+                    "Paper-Build"           : expectedPaperBuild,
+                    "Paper-Channel"         : expectedPaperChannel,
+                    "Build-Java"            : javaTarget.toString()
+            ]
+            expectedManifest.each { key, value ->
+                if (manifestAttributes.getValue(key) != value) {
+                    throw new GradleException(
+                            "Manifest release metadata drift for ${key}: "
+                                    + "${manifestAttributes.getValue(key)} != ${value}")
+                }
+            }
         }
+    }
+}
+
+def releaseDocBlocks = [
+        "README.md": """<!-- release-metadata:start -->
+| Component | Certified release |
+| --- | --- |
+| Server | Paper `${expectedPaperTarget}` build `${expectedPaperBuild}` (`${expectedPaperChannel}`) |
+| Paper API | `${expectedPaperApi}` |
+| Java bytecode | Java `${javaTarget}` (class version `${expectedClassMajor}`) |
+| Build JDK | Oracle JDK `${buildJdkVersion}` |
+| Verified runtime JDKs | Oracle JDK `${runtimeJdk25Version}` and `${runtimeJdk26Version}` |
+| Plugin version | `${releaseVersion}` |
+| Artifact | `${expectedArchiveName}` |
+<!-- release-metadata:end -->""",
+        "docs/installation.md": """<!-- release-metadata:start -->
+| Release fact | Value |
+| --- | --- |
+| Plugin | `${releaseVersion}` |
+| Artifact | `${expectedArchiveName}` |
+| Paper runtime | `${expectedPaperTarget}` build `${expectedPaperBuild}` (`${expectedPaperChannel}`) |
+| Compiled Paper API | `${expectedPaperApi}` |
+| Java bytecode | `${javaTarget}` |
+| Verified runtimes | Oracle JDK `${runtimeJdk25Version}` and `${runtimeJdk26Version}` |
+<!-- release-metadata:end -->""",
+        "docs/troubleshooting.md": """<!-- release-metadata:start -->
+Current release: `${releaseVersion}` in `${expectedArchiveName}`, compiled for
+Paper API `${expectedPaperApi}` and Java `${javaTarget}`. Certified server:
+Paper `${expectedPaperTarget}` build `${expectedPaperBuild}` (`${expectedPaperChannel}`).
+<!-- release-metadata:end -->"""
+]
+def releaseMarkerPattern = /(?s)<!-- release-metadata:start -->.*?<!-- release-metadata:end -->/
+def releaseDocFiles = releaseDocBlocks.keySet().collectEntries { path ->
+    [(path): layout.projectDirectory.file(path).asFile]
+}
+def releaseMarkdownFiles = ([
+        layout.projectDirectory.file("README.md").asFile
+] + fileTree(layout.projectDirectory.dir("docs")) {
+    include "**/*.md"
+}.files).sort { it.path }
+def dependencyLockFile = layout.projectDirectory.file("gradle.lockfile").asFile
+
+tasks.register("syncReleaseDocs") {
+    group = "documentation"
+    description = "Rewrites only marker-bounded current release facts from gradle.properties."
+    inputs.properties(releaseFacts)
+    inputs.files(releaseDocFiles.values())
+    outputs.files(releaseDocFiles.values())
+
+    doLast {
+        releaseDocBlocks.each { path, expectedBlock ->
+            File doc = releaseDocFiles[path]
+            String text = doc.getText("UTF-8")
+            if (!(text =~ releaseMarkerPattern).find()) {
+                throw new GradleException("Missing release metadata markers in ${path}")
+            }
+            doc.setText(
+                    text.replaceFirst(releaseMarkerPattern, Matcher.quoteReplacement(expectedBlock)),
+                    "UTF-8")
+        }
+    }
+}
+
+tasks.register("verifyReleaseDocs") {
+    group = "verification"
+    description = "Fails when current docs or locked Paper API drift from release properties."
+    inputs.properties(releaseFacts)
+    inputs.files(releaseMarkdownFiles)
+    inputs.file(dependencyLockFile)
+
+    doLast {
+        releaseDocBlocks.each { path, expectedBlock ->
+            String text = releaseDocFiles[path].getText("UTF-8")
+            if (!text.contains(expectedBlock)) {
+                throw new GradleException(
+                        "Release documentation drift in ${path}; run ./gradlew syncReleaseDocs")
+            }
+        }
+
+        def artifactPattern = ~/1MB-AntiPopup-v\d+\.\d+\.\d+-\d{3}-j\d+-\d+\.\d+\.jar/
+        def paperApiPattern = ~/\d+\.\d+\.build\.\d+-(?:alpha|beta|stable)/
+        releaseMarkdownFiles.each { doc ->
+            String text = doc.getText("UTF-8")
+            text.findAll(artifactPattern).each { artifact ->
+                if (artifact != expectedArchiveName) {
+                    throw new GradleException(
+                            "Stale artifact example in ${doc}: ${artifact}")
+                }
+            }
+            text.findAll(paperApiPattern).each { api ->
+                if (api != expectedPaperApi) {
+                    throw new GradleException("Stale Paper API in ${doc}: ${api}")
+                }
+            }
+        }
+
+        String expectedLock =
+                "io.papermc.paper:paper-api:${expectedPaperApi}=compileClasspath"
+        if (!dependencyLockFile.getText("UTF-8").contains(expectedLock)) {
+            throw new GradleException(
+                    "Paper API lock drift; expected ${expectedLock}")
+        }
+    }
+}
+
+tasks.register("printReleaseMetadata") {
+    group = "help"
+    description = "Prints canonical release facts for CI and release automation."
+    doLast {
+        releaseFacts.keySet().sort().each { key ->
+            println("${key}=${releaseFacts[key]}")
+        }
+    }
+}
+
+def maintainedPaperJarPath = providers.gradleProperty("paperJarPath").orElse("")
+tasks.register("verifyMaintainedPaperJar") {
+    group = "verification"
+    description = "Hashes a maintained Paper server JAR against the canonical release metadata."
+    inputs.property("paperJarPath", maintainedPaperJarPath)
+    inputs.property("expectedPaperJarName", expectedPaperJarName)
+    inputs.property("expectedPaperJarSha256", expectedPaperJarSha256)
+
+    doLast {
+        String configuredPath = maintainedPaperJarPath.get()
+        if (configuredPath.isBlank()) {
+            throw new GradleException(
+                    "Pass -PpaperJarPath=/absolute/path/${expectedPaperJarName}")
+        }
+
+        File paperJar = new File(configuredPath)
+        if (!paperJar.isFile()) {
+            throw new GradleException("Paper JAR does not exist: ${paperJar}")
+        }
+        if (paperJar.name != expectedPaperJarName) {
+            throw new GradleException(
+                    "Expected Paper JAR name ${expectedPaperJarName}, found ${paperJar.name}")
+        }
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256")
+        paperJar.withInputStream { input ->
+            byte[] buffer = new byte[64 * 1024]
+            for (int read = input.read(buffer); read != -1; read = input.read(buffer)) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        String actualSha256 = HexFormat.of().formatHex(digest.digest())
+        if (actualSha256 != expectedPaperJarSha256) {
+            throw new GradleException(
+                    "Paper JAR SHA-256 mismatch: ${actualSha256} != ${expectedPaperJarSha256}")
+        }
+        println("Verified ${paperJar}: ${actualSha256}")
     }
 }
 
 check {
     dependsOn tasks.named("verifyArtifact")
+    dependsOn tasks.named("verifyReleaseDocs")
 }
 
 dependencyLocking {

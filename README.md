@@ -40,8 +40,8 @@ The following historical upstream scope is deliberately removed moving forward:
   networking-platform targets such as Velocity and BungeeCord.
 - Spigot, Folia, legacy NMS modules, old Minecraft releases, and old-client
   packet formats.
-- Old Java targets; this fork emits Java 25 bytecode and build `006` has passed
-  its server smoke test on the installed Java 26.0.1 runtime.
+- Old Java targets; this fork emits Java 25 bytecode. Build `007` is built with
+  Oracle JDK 25.0.4 and is server-smoke-tested on Oracle JDK 25.0.4 and 26.0.2.
 - Commands, help, info, permissions, configuration, reload, diagnostics,
   chat-report features, metrics, console filtering, and server-properties setup.
 
@@ -55,10 +55,14 @@ proxy paths, and aggressively pruning them would risk breaking login injection.
 
 ## Release Lines
 
-- **Build `006` — current 1MB modern:** the certified popup-only Paper 26.2
-  build documented by this README. It has no commands, configuration, reload,
-  setup, chat-report modification, metrics, Log4j filter, legacy-client path,
-  proxy integration, or persistent state.
+- **Build `007` — current stable compatibility release:** updates the live
+  popup-only line to Paper 26.2 stable build 84 and the exact stable Paper API.
+  It retains build `006`'s deliberately minimal behavior and has no commands,
+  configuration, reload, setup, chat-report modification, metrics, Log4j
+  filter, legacy-client path, proxy integration, or persistent state.
+- **Build `006` — live predecessor and rollback:** the popup-only build proven
+  on the production 1MoreBlock server with a native client. Its JAR remains
+  available if build `007` needs to be rolled back after deployment.
 - **Build `003` — archived full legacy:** the feature-complete Paper-only 26.2
   fallback. It retains `/antipopup` commands, configuration and reload, the
   popup toggle, `server.properties` setup/restart handling, chat-report
@@ -66,23 +70,26 @@ proxy paths, and aggressively pruning them would risk breaking login injection.
   conversion, optional bStats, the Log4j `[Not Secure]` filter, legacy
   `SERVER_DATA` handling, and translator soft-dependency metadata.
 
-Build `003` is published for users who discover that build `006` deliberately
+Build `003` is published for users who discover that the modern line deliberately
 removed behavior they still require. It is archived and unsupported, includes
 the features later rejected for the 1MB server, and will not receive future
-Paper updates. Never install builds `003` and `006` at the same time. Downloads
+Paper updates. Never install multiple AntiPopup builds at the same time. Downloads
 and checksums are available from the
 [GitHub releases page](https://github.com/mrfdev/AntiPopup/releases).
 
 ## Compatibility
 
-| Component | Certified build |
+<!-- release-metadata:start -->
+| Component | Certified release |
 | --- | --- |
-| Server | Paper 26.2 |
-| Paper API | `26.2.build.56-alpha` |
-| Java bytecode | Java 25 (class version 69) |
-| Runtime | Paper `26.2-60-main@1cb58fb` on Java 26.0.1 smoke-tested |
-| Plugin version | `14.0.0-006` |
-| Artifact | `1MB-AntiPopup-v14.0.0-006-j25-26.2.jar` |
+| Server | Paper `26.2` build `84` (`STABLE`) |
+| Paper API | `26.2.build.84-stable` |
+| Java bytecode | Java `25` (class version `69`) |
+| Build JDK | Oracle JDK `25.0.4` |
+| Verified runtime JDKs | Oracle JDK `25.0.4` and `26.0.2` |
+| Plugin version | `14.0.1-007` |
+| Artifact | `1MB-AntiPopup-v14.0.1-007-j25-26.2.jar` |
+<!-- release-metadata:end -->
 
 No proxy or companion plugin is required. The embedded PacketEvents Paper/Bukkit
 adapter retains `spigot` in its upstream artifact and class names; that is an
@@ -99,17 +106,19 @@ PlaceholderAPI placeholders, commands, permissions, or configuration.
 
 ## Build and Test
 
-JDK 25 is the configured Gradle toolchain:
+JDK 25 is the configured Gradle toolchain. The release build uses the exact
+requested Oracle JDK while still allowing `JAVA_HOME` to be overridden:
 
 ```bash
-./gradlew clean build --warning-mode all
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.jdk/Contents/Home \
+  ./gradlew clean build --warning-mode all
 ```
 
 The build runs strict compilation and `verifyArtifact`, then writes only the
 shaded, deployable plugin to:
 
 ```text
-build/libs/1MB-AntiPopup-v14.0.0-006-j25-26.2.jar
+build/libs/1MB-AntiPopup-v14.0.1-007-j25-26.2.jar
 ```
 
 `pluginVersion` and the required three-digit `pluginBuild` live in
@@ -122,10 +131,12 @@ Paper and PacketEvents on one compatible component type system.
 PacketEvents' bundled bStats implementation is excluded, and its hard-coded
 metrics bootstrap is linked to inert local compatibility shims.
 
-The strict build runs its artifact checks. An isolated runtime test verifies
-startup, plugin listing, and clean disable on Paper 26.2 build 60 with Java
-26.0.1. Build `006` also passed its native 26.2 client join and ordinary-chat
-test; every later candidate must repeat that test.
+The strict build runs artifact, generated metadata, lockfile, and documentation
+drift checks. Isolated runtime tests verify startup, plugin listing, live release
+metadata, and clean disable on stable Paper 26.2 build 84 with Oracle JDK 25.0.4
+and 26.0.2. Build `006` remains the production native-client proof for the
+unchanged popup listener; deploy build `007` through normal staging and repeat
+the native-client popup/chat check before treating it as the new live rollback.
 
 ## Future Paper Updates
 
@@ -139,7 +150,7 @@ before merging.
 The complete checklist is in [Maintaining Paper compatibility](docs/maintenance.md).
 
 The embedded PacketEvents injector emits Java 26's final-field-mutation warning
-while it attaches to Paper's network channels. It works on Java 26.0.1; a server
+while it attaches to Paper's network channels. It works on Java 26.0.2; a server
 can explicitly authorize that access with
 `--enable-final-field-mutation=ALL-UNNAMED`. Re-test this boundary when moving to
 a later JDK or PacketEvents release.
@@ -159,8 +170,9 @@ checks are disabled and no metrics service is started.
 
 The isolated test does not replace a real-client login test. The production
 native 26.2 client completed the build `006` certification steps in
-`docs/maintenance.md`; protocol translators and older clients remain out of
-scope for the modern release.
+`docs/maintenance.md`; build `007` keeps that packet code unchanged but still
+needs the normal staging login check. Protocol translators and older clients
+remain out of scope for the modern release.
 
 ## Source, Support, and License
 

@@ -30,7 +30,7 @@ produced or supported.
 
 ## No External Integrations
 
-Build `006` declares no soft dependencies and supports no proxy or
+Build `007` declares no soft dependencies and supports no proxy or
 protocol-translation integration. Its only certified path is a native 26.2
 client joining Paper 26.2 directly. A proxy or translated old-client connection
 is not a supported deployment path.
@@ -42,5 +42,5 @@ public API.
 
 The production source uses the Paper/Bukkit API, while embedded PacketEvents
 uses Paper's Adventure types. It contains no versioned NMS class and no Folia
-support declaration. Build `006` handles only the modern `JOIN_GAME` packet;
+support declaration. Build `007` handles only the modern `JOIN_GAME` packet;
 the historical `SERVER_DATA` old-client path is not included.

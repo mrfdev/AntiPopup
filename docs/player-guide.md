@@ -3,7 +3,7 @@
 ## Introduction
 
 AntiPopup hides Minecraft's blue unsafe-server warning popup when a native 26.2
-client joins the 1MoreBlock Paper 26.2 server. Build `006` is deliberately
+client joins the 1MoreBlock Paper 26.2 server. Build `007` is deliberately
 server-specific and performs only that join-time operation.
 
 ## How Players Use It
@@ -22,9 +22,10 @@ Suppression is always active while the plugin is loaded.
 ## Requirements and Limits
 
 AntiPopup has no rewards, costs, cooldowns, usage limits, progression, or
-placeholders. Build `006` is certified for Paper 26.2 with a native 26.2 client
-after its successful real-client popup and ordinary-chat test. Older clients,
-protocol translators, and proxy paths are outside its supported scope.
+placeholders. Build `007` targets stable Paper 26.2 build 84. Its popup listener
+is unchanged from live build `006`, which passed the real-client popup and
+ordinary-chat test. Older clients, protocol translators, and proxy paths are
+outside its supported scope.
 
 ## Important Notes
 

@@ -1,5 +1,11 @@
 # Troubleshooting
 
+<!-- release-metadata:start -->
+Current release: `14.0.1-007` in `1MB-AntiPopup-v14.0.1-007-j25-26.2.jar`, compiled for
+Paper API `26.2.build.84-stable` and Java `25`. Certified server:
+Paper `26.2` build `84` (`STABLE`).
+<!-- release-metadata:end -->
+
 ## The Plugin Will Not Load
 
 Confirm that:
@@ -7,7 +13,7 @@ Confirm that:
 1. The server is Paper 26.2.
 2. The runtime is Java 25 or newer.
 3. Only one AntiPopup JAR is present in `plugins/`.
-4. The file name is `1MB-AntiPopup-v14.0.0-006-j25-26.2.jar`.
+4. The JAR matches the current release metadata above.
 
 `UnsupportedClassVersionError` means the runtime is older than Java 25; this
 build uses class-file version 69. This branch no longer contains the old
@@ -23,17 +29,17 @@ build uses class-file version 69. This branch no longer contains the old
 - Record the exact Paper build, Java version, client version, and JAR checksum.
 
 If the popup still returns inside that exact boundary, stop the server and
-keep the build `006` logs for diagnosis. 1MoreBlock can restore its retained
-build `005` JAR. Public users may try archived build `003`, but it restores the
+keep the build `007` logs for diagnosis. 1MoreBlock can restore its known-live
+build `006` JAR. Public users may try archived build `003`, but it restores the
 full commands/config/setup/chat-report/bStats/Log4j/legacy-client surface and is
-unsupported. There is no configuration or reload path in build `006` itself.
+unsupported. There is no configuration or reload path in the modern line.
 
-## A Feature Is Missing After Updating to Build 006
+## A Feature Is Missing After Updating to the Modern Release
 
 That is expected if the missing feature is a command, configuration toggle,
 reload/setup action, chat-report modification, metric, console filter,
-legacy-client path, or translator integration. Build `006` intentionally
-contains none of them. If the server still requires that behavior, use archived
+legacy-client path, or translator integration. Builds `006` and `007` intentionally
+contain none of them. If the server still requires that behavior, use archived
 build `003` after reviewing its release notes, and never load both JARs together.
 
 ## A New Paper or Client Version Was Released
@@ -46,8 +52,8 @@ certified JAR until that work passes.
 ## Java 26 Final-Field Warning
 
 PacketEvents 2.13.0 reflectively attaches to Paper's network channel list. Java
-26.0.1 permits this but prints a warning that a future Java release may block
-it. Build `006` completed startup, plugin listing, and clean shutdown despite
+26.0.2 permits this but prints a warning that a future Java release may block
+it. Build `007` completed startup, plugin listing, and clean shutdown despite
 the warning.
 
 To explicitly authorize this access on Java 26, add the following JVM argument
