@@ -26,7 +26,7 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 
    ```bash
    ./gradlew verifyMaintainedPaperJar \
-     -PpaperJarPath=/Users/floris/Projects/Codex/servers/cache/Paper-26.2/Paper-26.2.jar
+     -PpaperJarPath=/absolute/path/Paper-26.2.jar
    ```
 
 5. Run the strict build:

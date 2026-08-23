@@ -110,7 +110,7 @@ JDK 25 is the configured Gradle toolchain. The release build uses the exact
 requested Oracle JDK while still allowing `JAVA_HOME` to be overridden:
 
 ```bash
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.jdk/Contents/Home \
+JAVA_HOME=/path/to/jdk-25 \
   ./gradlew clean build --warning-mode all
 ```
 
