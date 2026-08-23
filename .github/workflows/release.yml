@@ -32,7 +32,8 @@ jobs:
       - name: Create checksum
         run: |
           source build/release-metadata.env
-          sha256sum "build/libs/${artifactName}" > build/libs/SHA256SUMS
+          cd build/libs
+          sha256sum "${artifactName}" > SHA256SUMS
 
       - name: Create draft GitHub release
         env:
