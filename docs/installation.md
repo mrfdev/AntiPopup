@@ -82,7 +82,7 @@ Never leave multiple AntiPopup builds in `plugins/`.
 ## Building Locally
 
 ```bash
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.0.4.jdk/Contents/Home \
+JAVA_HOME=/path/to/jdk-25 \
   ./gradlew clean build --warning-mode all
 ```
 
