@@ -1,0 +1,34 @@
+name: Set up release JDK
+description: Install the exact Oracle JDK recorded in gradle.properties on Linux x64.
+runs:
+  using: composite
+  steps:
+    - name: Install pinned Oracle JDK
+      shell: bash
+      run: |
+        set -euo pipefail
+        # setup-java@v5 rejects Oracle's four-part release versions as invalid
+        # SemVer. Install the real archive without changing its version number.
+        if [[ "$RUNNER_OS/$RUNNER_ARCH" != "Linux/X64" ]]; then
+          echo 'This release JDK installer requires a Linux x64 runner.' >&2
+          exit 1
+        fi
+        build_jdk_version="$(sed -n 's/^buildJdkVersion=//p' gradle.properties)"
+        build_jdk_sha256="$(sed -n 's/^buildJdkLinuxX64Sha256=//p' gradle.properties)"
+        if [[ ! "$build_jdk_version" =~ ^25(\.[0-9]+){2,3}$ ]] \
+            || [[ ! "$build_jdk_sha256" =~ ^[0-9a-f]{64}$ ]]; then
+          echo 'Invalid release JDK version or archive checksum in gradle.properties.' >&2
+          exit 1
+        fi
+        build_jdk_work="$(mktemp -d "$RUNNER_TEMP/antipopup-jdk.XXXXXX")"
+        build_jdk_archive="$build_jdk_work/jdk.tar.gz"
+        build_jdk_home="$build_jdk_work/home"
+        curl --fail --location --silent --show-error --retry 3 \
+          "https://download.oracle.com/java/25/archive/jdk-${build_jdk_version}_linux-x64_bin.tar.gz" \
+          --output "$build_jdk_archive"
+        printf '%s  %s\n' "$build_jdk_sha256" "$build_jdk_archive" | sha256sum --check
+        mkdir "$build_jdk_home"
+        tar -xzf "$build_jdk_archive" -C "$build_jdk_home" --strip-components=1
+        "$build_jdk_home/bin/java" -version
+        echo "JAVA_HOME=$build_jdk_home" >> "$GITHUB_ENV"
+        echo "$build_jdk_home/bin" >> "$GITHUB_PATH"

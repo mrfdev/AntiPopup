@@ -17,6 +17,12 @@ automatic discovery and downloads are disabled. `verifyBuildJdk` checks the
 selected compiler's full release version before compilation. Both `--release`
 and the toolchain language version remain 25 (class-file version 69).
 
+CI and the draft-release workflow share `.github/actions/setup-release-jdk`.
+It installs the exact Oracle Linux x64 archive, verifies
+`buildJdkLinuxX64Sha256`, and exports `JAVA_HOME` and `PATH`. This avoids
+`setup-java@v5`'s SemVer parser, which rejects Oracle's four-part `25.0.4.1`
+release number. Keep the archive checksum in sync when changing the build JDK.
+
 For a compatibility release, increment the semantic patch and three-digit
 build number once. Keep the version fixed while rerunning failed checks.
 Preserve earlier JARs and verification records before cleaning `build/`.
