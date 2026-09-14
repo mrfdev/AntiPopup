@@ -107,7 +107,28 @@ java {
     }
 }
 
+def buildCompiler = javaToolchains.compilerFor(java.toolchain)
+def verifyBuildJdk = tasks.register("verifyBuildJdk") {
+    group = "verification"
+    description = "Verifies the selected compiler matches the recorded release JDK."
+    inputs.property("expectedVersion", buildJdkVersion)
+    inputs.property("compilerVersion", buildCompiler.map { it.metadata.javaRuntimeVersion })
+
+    doLast {
+        String actualVersion = inputs.properties.compilerVersion
+        String expectedVersion = inputs.properties.expectedVersion
+        if (Runtime.Version.parse(actualVersion).version()
+                != Runtime.Version.parse(expectedVersion).version()) {
+            throw new GradleException(
+                    "Build requires JDK ${expectedVersion}; selected ${actualVersion}. "
+                            + "Set JAVA_HOME and prepend JAVA_HOME/bin to PATH.")
+        }
+        println("Verified build compiler: ${actualVersion}")
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
+    dependsOn verifyBuildJdk
     options.release = javaTarget
     options.encoding = "UTF-8"
     options.compilerArgs.addAll(["-Xlint:deprecation", "-Xlint:removal", "-Werror"])

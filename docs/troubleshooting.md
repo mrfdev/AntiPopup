@@ -1,7 +1,7 @@
 # Troubleshooting
 
 <!-- release-metadata:start -->
-Current release: `14.0.1-007` in `1MB-AntiPopup-v14.0.1-007-j25-26.2.jar`, compiled for
+Current release: `14.0.2-008` in `1MB-AntiPopup-v14.0.2-008-j25-26.2.jar`, compiled for
 Paper API `26.2.build.84-stable` and Java `25`. Certified server:
 Paper `26.2` build `84` (`STABLE`).
 <!-- release-metadata:end -->
@@ -29,7 +29,7 @@ build uses class-file version 69. This branch no longer contains the old
 - Record the exact Paper build, Java version, client version, and JAR checksum.
 
 If the popup still returns inside that exact boundary, stop the server and
-keep the build `007` logs for diagnosis. 1MoreBlock can restore its known-live
+keep the build `008` logs for diagnosis. 1MoreBlock can restore its known-live
 build `006` JAR. Public users may try archived build `003`, but it restores the
 full commands/config/setup/chat-report/bStats/Log4j/legacy-client surface and is
 unsupported. There is no configuration or reload path in the modern line.
@@ -38,7 +38,7 @@ unsupported. There is no configuration or reload path in the modern line.
 
 That is expected if the missing feature is a command, configuration toggle,
 reload/setup action, chat-report modification, metric, console filter,
-legacy-client path, or translator integration. Builds `006` and `007` intentionally
+legacy-client path, or translator integration. Builds `006` through `008` intentionally
 contain none of them. If the server still requires that behavior, use archived
 build `003` after reviewing its release notes, and never load both JARs together.
 
@@ -54,7 +54,7 @@ certified JAR until that work passes.
 PacketEvents 2.13.0 reflectively attaches to Paper's network channel list. Java
 26.0.2 permits this but prints a warning that a future Java release may block
 it. Build `007` completed startup, plugin listing, and clean shutdown despite
-the warning.
+the warning. Build `008` repeats these checks on Java 26.0.2.1.
 
 To explicitly authorize this access on Java 26, add the following JVM argument
 before `-jar`:

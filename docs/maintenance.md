@@ -29,7 +29,9 @@ dependencies, strict warning-free compilation, and final-JAR validation.
      -PpaperJarPath=/absolute/path/Paper-26.2.jar
    ```
 
-5. Run the strict build:
+5. Select Oracle JDK 25.0.4.1 with `JAVA_HOME` and prepend its `bin` directory
+   to `PATH` (see [local verification in the source repository](https://github.com/mrfdev/AntiPopup/blob/master/docs/agents/local-verification.md)). Run the
+   canonical full rebuild:
 
    ```bash
    ./gradlew clean build --warning-mode all
@@ -44,7 +46,9 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 7. Inspect the artifact name, manifest, `plugin.yml`, Java class major, and JAR
    contents. `verifyArtifact` automates the invariants this fork depends on.
 8. Start a clean isolated Paper server using the real candidate JAR. Verify
-   enable, plugin listing, clean disable, and logs.
+   enable, plugin listing, clean disable, and logs on both recorded JDKs.
+   The repeatable local smoke runner is described in
+   [local verification in the source repository](https://github.com/mrfdev/AntiPopup/blob/master/docs/agents/local-verification.md).
 9. Join directly with the matching native client. Verify the popup is absent and
    ordinary player chat still works. Do not use proxies, protocol translators,
    or older clients for certification.
@@ -72,7 +76,9 @@ documentation against `gradle.properties`.
 Build `003` is the public, archived, unsupported full-feature fallback. Build
 `005` remains an earlier internal rollback artifact. Build `006` is the known-
 live minimalist rollback certified by its native-client join and chat test.
-Build `007` is the stable Paper 26.2 compatibility release; promote it to the
-new live rollback only after the normal staging client check. Keep all retained
+Build `007` is the previous Paper 26.2 compatibility release. Build `008`
+updates the build JDK to 25.0.4.1 and runtime checks to 25.0.4.1 and 26.0.2.1
+without changing Paper or plugin behavior; promote it to the new live rollback
+only after the normal staging client check. Keep all retained
 JAR checksums with the deployment record, never load multiple builds together,
 and do not apply modern maintenance promises to legacy build `003`.
