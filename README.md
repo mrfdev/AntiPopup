@@ -3,7 +3,8 @@
 AntiPopup is a standalone Paper plugin that hides Minecraft's unsafe-server
 login popup. This `mrfdev` fork is a deliberately narrow build for **Paper
 26.3 build 40 (ALPHA)** with **Java 25 bytecode**. Build `009` is an experimental
-test candidate; native-client popup and chat verification is still pending.
+test candidate. Vanilla 26.3 popup suppression is operator-confirmed, and
+join/rejoin passed without console errors. Ordinary-chat verification is pending.
 The working 26.2 source is retained at tag `snapshot-paper-26.2-20260924`.
 
 Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/antipopup/)
@@ -59,7 +60,8 @@ proxy paths, and aggressively pruning them would risk breaking login injection.
 
 - **Build `009` — experimental 26.3 candidate:** targets Paper 26.3 ALPHA build
   40 and embeds PacketEvents 2.14.0 for its changed join-packet format. Keeps
-  Java 25 bytecode and the same popup-only listener. Awaiting native-client testing.
+  Java 25 bytecode and the same popup-only listener. Vanilla 26.3 popup suppression
+  and join/rejoin passed; ordinary-chat verification remains pending.
 - **Build `008` — working 26.2 snapshot:** uses Oracle JDK
   25.0.4.1 for builds and verifies Oracle JDK 25.0.4.1 and 26.0.2.1 runtimes.
   Paper 26.2 build 84, Java 25 bytecode, dependencies, and plugin behavior
@@ -183,7 +185,8 @@ checks are disabled and no metrics service is started.
 The isolated test does not replace a real-client login test. The production
 native 26.2 client completed the build `006` certification steps in
 `docs/maintenance.md`; build `009` keeps that packet code unchanged but updates
-the embedded transport and still needs its own 26.3 login and chat check.
+the embedded transport. Its vanilla 26.3 popup and join/rejoin check passed;
+ordinary-chat verification remains pending.
 Protocol translators and older clients
 remain out of scope for the modern release.
 

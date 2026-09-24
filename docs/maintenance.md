@@ -58,7 +58,8 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 Changing only `paperTarget` is not certification. PacketEvents must recognize
 the released protocol, its `JOIN_GAME` wrapper must remain compatible, and the
 native-client join behavior must be exercised. The current 26.3 build 40 ALPHA
-candidate remains experimental until the direct native-client check passes.
+candidate passed its vanilla-client popup and join/rejoin check. Ordinary-player
+chat remains unverified, and the Paper target remains experimental.
 Later versions require the same complete checklist.
 
 The build accepts pinned STABLE, BETA, and ALPHA Paper artifacts; the channel is
@@ -85,7 +86,8 @@ Build `007` is the previous Paper 26.2 compatibility release. Build `008`
 updates the build JDK to 25.0.4.1 and runtime checks to 25.0.4.1 and 26.0.2.1
 without changing Paper or plugin behavior. The operator confirmed build `008`
 working before the 26.3 upgrade; tag `snapshot-paper-26.2-20260924` preserves that
-source. Build `009` is the 26.3 ALPHA candidate, awaiting in-game testing.
+source. Build `009` is the 26.3 ALPHA candidate with operator-confirmed popup
+suppression and successful join/rejoin; ordinary-player chat remains unverified.
 Restore the original 26.2 server to roll back; never open an upgraded world with
 an older server JAR. Keep all retained
 JAR checksums with the deployment record, never load multiple builds together,

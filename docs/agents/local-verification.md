@@ -98,8 +98,17 @@ native-client popup test, as described in [26.3 testing](../paper-26.3-testing.m
 
 Observed upstream warnings remain Gradle native access, JOML Unsafe access,
 OSHI's unrecognized macOS 27 name, and PacketEvents' Java 26 final-field mutation.
-The runtime smoke tests use the default JVM access policy. In-game popup and
-ordinary-chat verification is still pending; this is an experimental candidate.
+The runtime smoke tests use the default JVM access policy.
+
+The operator subsequently confirmed a vanilla Minecraft 26.3 join with no popup.
+Console review recorded successful join/rejoin at 23:40:26 and 23:40:39
+(Europe/Amsterdam) on 2026-09-24, normal disconnects, and no errors or exceptions.
+The installed JAR checksum remains the one recorded above. Evidence is retained
+in `run/verification/14.0.3-009/native-client-server.log`,
+`native-client-console.txt`, and `native-client-result.json`.
+Popup suppression passes this native-client check. Ordinary-player chat was not
+reported or present in the log, so it remains unverified. Paper build 40 remains
+an ALPHA target.
 
 ## Verification Record: 2026-09-15, Release 14.0.2-008
 

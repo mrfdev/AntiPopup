@@ -2,7 +2,9 @@
 
 Build `009` (`14.0.3-009`) targets Paper 26.3 ALPHA build 40 with PacketEvents
 2.14.0. It keeps Java 25 bytecode and the existing popup-only listener.
-Native-client popup and chat testing is pending.
+The operator confirmed a vanilla 26.3 join with no popup on 2026-09-24.
+Console review confirmed successful join/rejoin without errors. Ordinary-player
+chat verification has not yet been reported.
 
 ## Preserved 26.2 Baseline
 
@@ -58,6 +60,17 @@ startup/shutdown passed. See the dated
 [verification record](agents/local-verification.md) for checksums and evidence.
 
 ## In-Game Checks
+
+The 2026-09-24 console records two successful logins at 23:40:26 and 23:40:39
+(Europe/Amsterdam), followed by normal disconnects. There were no errors or
+exceptions. The operator confirmed the client was vanilla 26.3 and no popup
+appeared. The installed JAR still matches the recorded build `009` checksum.
+The retained log contains only join/leave system messages, so ordinary-player
+chat is not marked as tested. Local evidence is under
+`run/verification/14.0.3-009/` in `native-client-server.log`,
+`native-client-console.txt`, and `native-client-result.json`.
+
+For repeat testing and the remaining chat check:
 
 1. Join `127.0.0.1:26340` directly using an unmodified native Minecraft 26.3
    client, without a proxy or protocol translator. Ensure the client has not

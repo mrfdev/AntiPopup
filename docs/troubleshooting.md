@@ -45,7 +45,8 @@ build `003` after reviewing its release notes, and never load both JARs together
 
 Do not assume that a successful build alone certifies a new protocol. Every
 Paper or protocol update needs a candidate branch, a strict build, and a direct
-matching-client login test. Build `009` still awaits its native 26.3 client test.
+matching-client login test. Build `009` passed its vanilla 26.3 popup and
+join/rejoin check; ordinary-player chat remains unverified.
 
 ## Java 26 Final-Field Warning
 

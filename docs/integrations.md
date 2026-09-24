@@ -33,7 +33,8 @@ produced or supported.
 Build `009` declares no soft dependencies and supports no proxy or
 protocol-translation integration. Its candidate test path is a native 26.3
 client joining Paper 26.3 directly. A proxy or translated old-client connection
-is not a supported deployment path. Native-client certification is pending.
+is not a supported deployment path. The vanilla 26.3 popup and join/rejoin check
+passed; ordinary-player chat remains unverified.
 
 The plugin does not expose commands, permissions, settings, placeholders, or a
 public API.

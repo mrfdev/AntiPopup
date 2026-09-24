@@ -2,7 +2,7 @@
 
 ## Experimental Candidate Scope
 
-Build `009` is awaiting native-client testing and targets:
+Build `009` passed its vanilla-client popup and join/rejoin check and targets:
 
 - Paper 26.3 ALPHA build 40.
 - A native Minecraft 26.3 client.
@@ -28,7 +28,7 @@ JAR; the required packet transport is embedded.
 The isolated runtime tests use Paper 26.3 ALPHA build 40. The 26.2 build `008`
 snapshot remains the working rollback. Follow the
 [26.3 testing instructions](paper-26.3-testing.md) for the cloned test server;
-the direct native-client popup/chat check is still required.
+popup suppression is operator-confirmed; ordinary-player chat remains unverified.
 
 ## Fresh Installation
 

@@ -3,8 +3,8 @@
 ## Introduction
 
 AntiPopup hides Minecraft's blue unsafe-server warning popup when a native
-client joins. Build `009` targets the Paper 26.3 test server and awaits in-game
-verification. It performs only that join-time operation.
+client joins. Build `009` passed its vanilla 26.3 popup and join/rejoin check on
+the test server. It performs only that join-time operation.
 
 ## How Players Use It
 
@@ -24,7 +24,7 @@ Suppression is always active while the plugin is loaded.
 AntiPopup has no rewards, costs, cooldowns, usage limits, progression, or
 placeholders. Build `009` targets experimental Paper 26.3 build 40. Its popup
 listener is unchanged from the working 26.2 line, but its updated packet
-transport still needs the native 26.3 popup and ordinary-chat test. Older
+transport passed the native 26.3 popup check; ordinary chat remains unverified. Older
 clients, protocol translators, and proxy paths are outside its supported scope.
 
 ## Important Notes
