@@ -1,21 +1,21 @@
 # Installation and Updates
 
-## Certified Scope
+## Experimental Candidate Scope
 
-Build `008` has a deliberately narrow deployment boundary:
+Build `009` is awaiting native-client testing and targets:
 
-- Paper 26.2.
-- A native Minecraft 26.2 client.
+- Paper 26.3 ALPHA build 40.
+- A native Minecraft 26.3 client.
 - Java 25 or newer. The plugin contains Java 25 bytecode; Oracle JDK 25.0.4.1 and
   26.0.2.1 are server-smoke-tested.
 
 <!-- release-metadata:start -->
 | Release fact | Value |
 | --- | --- |
-| Plugin | `14.0.2-008` |
-| Artifact | `1MB-AntiPopup-v14.0.2-008-j25-26.2.jar` |
-| Paper runtime | `26.2` build `84` (`STABLE`) |
-| Compiled Paper API | `26.2.build.84-stable` |
+| Plugin | `14.0.3-009` |
+| Artifact | `1MB-AntiPopup-v14.0.3-009-j25-26.3.jar` |
+| Paper runtime | `26.3` build `40` (`ALPHA`) |
+| Compiled Paper API | `26.3.build.40-alpha` |
 | Java bytecode | `25` |
 | Verified runtimes | Oracle JDK `25.0.4.1` and `26.0.2.1` |
 <!-- release-metadata:end -->
@@ -25,20 +25,21 @@ for proxies, protocol translators, old clients, other server implementations,
 Paper 26.1.2, or later Paper releases. Do not install a separate PacketEvents
 JAR; the required packet transport is embedded.
 
-The isolated runtime tests use stable Paper 26.2 build 84. Build `006` remains
-the production native-client proof for the unchanged join-packet listener;
-repeat that direct popup/chat check while staging build `008`.
+The isolated runtime tests use Paper 26.3 ALPHA build 40. The 26.2 build `008`
+snapshot remains the working rollback. Follow the
+[26.3 testing instructions](paper-26.3-testing.md) for the cloned test server;
+the direct native-client popup/chat check is still required.
 
 ## Fresh Installation
 
 1. Stop the Paper server.
-2. Put the build `008` JAR in the server's top-level `plugins/` directory.
+2. Put the build `009` JAR in the server's top-level `plugins/` directory.
 3. Confirm no other AntiPopup JAR is present there.
 4. Start Paper with Java 25 or newer.
 5. Confirm the AntiPopup startup section includes:
    - `Loaded embedded PacketEvents.`
-   - `Initiated embedded PacketEvents for Paper 26.2.`
-6. Join directly with a native 26.2 client.
+   - `Initiated embedded PacketEvents for Paper 26.3.`
+6. Join directly with a native 26.3 client.
 7. Confirm the blue unsafe-server popup is absent and ordinary player chat still
    works.
 
@@ -47,9 +48,9 @@ steps. Popup suppression is always active while the plugin is loaded.
 
 ## Choosing Modern or Legacy
 
-Build `008` is the current stable compatibility release. Use it when the only
-required behavior is hiding the native 26.2 login popup. Build `006` is the
-known-live immediate rollback while build `008` completes normal staging.
+Build `009` is the experimental 26.3 compatibility candidate. Its only behavior
+is hiding the native login popup. Keep the working 26.2 build `008` and its
+original server while this candidate completes staging.
 
 Build `003` is the public archived legacy fallback for servers that still need
 functionality intentionally removed from the modern line. It includes commands,
@@ -63,19 +64,19 @@ Never install multiple AntiPopup builds at once.
 
 ## Updating and Rolling Back
 
-Build `006` is the immediate 1MoreBlock live rollback, and build `005` remains
-an earlier internal rollback. Public users can use archived build `003` when
+Build `008` and the untouched 26.2 server are the immediate rollback for this
+upgrade. Builds `006` and `005` remain earlier internal rollbacks. Public users
+can use archived build `003` when
 they specifically need the removed legacy features. Retain rollback JARs and
 checksums outside the active `plugins/` directory.
 
 1. Stop the server cleanly.
 2. Remove the previous AntiPopup JAR.
-3. Copy in `1MB-AntiPopup-v14.0.2-008-j25-26.2.jar` and start the server.
+3. Copy in `1MB-AntiPopup-v14.0.3-009-j25-26.3.jar` and start the server.
 4. Confirm the two startup lines above.
-5. Repeat the native 26.2 client join and chat test.
-6. If build `008` fails, stop the server. 1MoreBlock can restore retained build
-   `006`; public users can try archived build `003` after reviewing its expanded
-   behavior and unsupported status.
+5. Repeat the native 26.3 client join and chat test.
+6. If build `009` fails, stop the 26.3 clone and use the original 26.2 server
+   with build `008`. Do not downgrade an upgraded world in place.
 
 Never leave multiple AntiPopup builds in `plugins/`.
 
@@ -90,7 +91,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 The build requires the Oracle JDK 25.0.4.1 toolchain and produces:
 
 ```text
-build/libs/1MB-AntiPopup-v14.0.2-008-j25-26.2.jar
+build/libs/1MB-AntiPopup-v14.0.3-009-j25-26.3.jar
 ```
 
 The build includes final-JAR validation. See

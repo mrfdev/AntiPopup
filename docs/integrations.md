@@ -4,7 +4,7 @@
 
 The deployable JAR relocates the runtime libraries it needs:
 
-- PacketEvents `2.13.0`
+- PacketEvents `2.14.0`
 - Adventure NBT `5.2.0`
 
 PacketEvents is relocated. Adventure NBT is kept in its standard package because
@@ -14,7 +14,7 @@ PacketEvents' bundled bStats implementation is excluded. Its hard-coded metrics
 bootstrap is redirected to inert linkage shims, so the embedded packet engine
 does not start a telemetry service.
 
-AntiPopup itself owns only five classes. The standalone JAR remains about 4.5
+AntiPopup itself owns only five classes. The standalone JAR is about 4.9
 MiB because PacketEvents' complete reflection-driven injector and protocol
 library is retained; its generic compatibility internals do not make old
 clients or proxies supported deployment paths.
@@ -30,10 +30,10 @@ produced or supported.
 
 ## No External Integrations
 
-Build `008` declares no soft dependencies and supports no proxy or
-protocol-translation integration. Its only certified path is a native 26.2
-client joining Paper 26.2 directly. A proxy or translated old-client connection
-is not a supported deployment path.
+Build `009` declares no soft dependencies and supports no proxy or
+protocol-translation integration. Its candidate test path is a native 26.3
+client joining Paper 26.3 directly. A proxy or translated old-client connection
+is not a supported deployment path. Native-client certification is pending.
 
 The plugin does not expose commands, permissions, settings, placeholders, or a
 public API.
@@ -42,5 +42,5 @@ public API.
 
 The production source uses the Paper/Bukkit API, while embedded PacketEvents
 uses Paper's Adventure types. It contains no versioned NMS class and no Folia
-support declaration. Build `008` handles only the modern `JOIN_GAME` packet;
+support declaration. Build `009` handles only the modern `JOIN_GAME` packet;
 the historical `SERVER_DATA` old-client path is not included.

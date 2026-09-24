@@ -37,10 +37,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           source build/release-metadata.env
+          release_flags=()
+          if [[ "$paperChannel" != "STABLE" ]]; then
+            release_flags+=(--prerelease)
+          fi
           gh release create "v${version}" \
             "build/libs/${artifactName}" \
             build/libs/SHA256SUMS \
             --draft \
+            "${release_flags[@]}" \
             --generate-notes \
             --target "$GITHUB_SHA" \
             --title "1MB AntiPopup ${version}"

@@ -40,8 +40,8 @@ if (expectedPaperApi != expectedPaperApiFromRelease) {
     throw new GradleException(
             "paperApiVersion must match release metadata: ${expectedPaperApiFromRelease}")
 }
-if (expectedPaperChannel != "STABLE") {
-    throw new GradleException("Certified releases must use the STABLE Paper channel")
+if (!(expectedPaperChannel in ["STABLE", "BETA", "ALPHA"])) {
+    throw new GradleException("Paper channel must be STABLE, BETA, or ALPHA")
 }
 if (expectedPaperJarName != "Paper-${expectedPaperTarget}.jar") {
     throw new GradleException("paperJarName must use Paper-{version}.jar")
@@ -90,7 +90,7 @@ dependencies {
     }
 
     implementation("com.github.retrooper:packetevents-spigot:${packetEventsVersion}") {
-        // Paper supplies Adventure. PacketEvents 2.13 supports Paper's Adventure 5.
+        // Paper supplies Adventure. PacketEvents 2.14 supports Paper's Adventure 5.
         exclude group: "net.kyori"
     }
     // Paper exposes Adventure API 5 (including BinaryTagHolder), but not the
@@ -454,7 +454,7 @@ tasks.register("verifyArtifact") {
 
 def releaseDocBlocks = [
         "README.md": """<!-- release-metadata:start -->
-| Component | Certified release |
+| Component | Build target |
 | --- | --- |
 | Server | Paper `${expectedPaperTarget}` build `${expectedPaperBuild}` (`${expectedPaperChannel}`) |
 | Paper API | `${expectedPaperApi}` |
@@ -476,7 +476,7 @@ def releaseDocBlocks = [
 <!-- release-metadata:end -->""",
         "docs/troubleshooting.md": """<!-- release-metadata:start -->
 Current release: `${releaseVersion}` in `${expectedArchiveName}`, compiled for
-Paper API `${expectedPaperApi}` and Java `${javaTarget}`. Certified server:
+Paper API `${expectedPaperApi}` and Java `${javaTarget}`. Target server:
 Paper `${expectedPaperTarget}` build `${expectedPaperBuild}` (`${expectedPaperChannel}`).
 <!-- release-metadata:end -->"""
 ]

@@ -41,7 +41,7 @@ shaded deployable JAR, reused unchanged for both runtime tests.
 ## Paper Smoke Tests
 
 Use Python 3.11 or newer and an existing Paper template containing the canonical
-`Paper-26.2.jar`, its downloaded libraries/cache, and an already accepted
+`Paper-26.3.jar`, its downloaded libraries/cache, and an already accepted
 `eula.txt`. The runner verifies the pinned checksum before creating fresh
 loopback-only instances under ignored `run/verification/`; it does not modify
 the template, old test records, or a live server.
@@ -62,8 +62,44 @@ Java 26 runs with its default final-field policy to expose PacketEvents warnings
 
 The live runtime is Java 26. These server checks do not assert that a graphical
 client displayed no popup or that a real player sent chat. Repeat the native
-26.2 popup/chat check during staging as described in [maintenance](../maintenance.md).
+26.3 popup/chat check during staging as described in [maintenance](../maintenance.md).
 Historical native-client results for builds `005` and `006` remain unchanged.
+
+## Verification Record: 2026-09-24, Candidate 14.0.3-009
+
+- Target: Paper 26.3 ALPHA build 40 and exact API `26.3.build.40-alpha`.
+- Embedded PacketEvents: 2.14.0, with explicit 26.3 protocol support.
+- Canonical `./gradlew clean build --warning-mode all`: PASS, all eight
+  actionable tasks executed using Oracle JDK `25.0.4.1+1-LTS-5`.
+  `test` and `compileTestJava` remain `NO-SOURCE`.
+- `verifyMaintainedPaperJar`: PASS against the PaperMC build 40 SHA-256
+  `49399919246cbf443efc8507447dc948eb7477c41be560b0e87e2a455aff824a`.
+- Artifact: 5,157,521 bytes and 1,896 classes. All five AntiPopup classes have
+  major version 69; no bundled class exceeds major version 69.
+- Plugin SHA-256:
+  `24d2b36b094a69216ae3acf182bca5baab5a39bbf658ad318b162906a23ab722`.
+
+| Runtime | Paper | Smoke checks | Shutdown |
+| --- | --- | --- | --- |
+| Oracle `25.0.4.1+1-LTS-5` | 26.3 ALPHA build 40 | All nine passed | Exit 0 |
+| Oracle `26.0.2.1+1-7` | 26.3 ALPHA build 40 | All nine passed | Exit 0 |
+
+Both disposable tests used the same candidate JAR, loopback binding,
+`online-mode=true`, and `enforce-secure-profile=true`. Neither logged an error
+or exception, and neither created AntiPopup state. Logs, status responses and
+JSON results are under `run/verification/14.0.3-009/20260924-232224/`.
+The full build and artifact inspection records are in its parent directory.
+
+The actual cloned world also started via the updated launch script on Java
+26.0.2.1, listed only AntiPopup `14.0.3-009`, and shut down cleanly with exit 0.
+Its first-run log is `run/verification/14.0.3-009/staging-first-start.log`.
+The clone retains `enforce-secure-profile=false` from its source for the
+native-client popup test, as described in [26.3 testing](../paper-26.3-testing.md).
+
+Observed upstream warnings remain Gradle native access, JOML Unsafe access,
+OSHI's unrecognized macOS 27 name, and PacketEvents' Java 26 final-field mutation.
+The runtime smoke tests use the default JVM access policy. In-game popup and
+ordinary-chat verification is still pending; this is an experimental candidate.
 
 ## Verification Record: 2026-09-15, Release 14.0.2-008
 

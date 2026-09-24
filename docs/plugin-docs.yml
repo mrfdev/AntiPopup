@@ -1,7 +1,7 @@
 id: antipopup
 name: AntiPopup
 category: custom-server-plugin
-summary: Hide Minecraft's unsafe-server login popup for native Paper 26.2 players.
+summary: Experimental Paper 26.3 candidate for hiding the native client's unsafe-server login popup.
 # The modern build is commandless; false keeps generated command indexes empty.
 main_command: false
 docs_url: https://docs.1moreblock.com/custom-server-plugins/antipopup/
@@ -9,6 +9,6 @@ player_guide: player-guide.md
 # Imported projects still publish links to their mirrored README automatically.
 technical_readme: false
 java_target: "25"
-paper_target: "26.2"
+paper_target: "26.3"
 official_project: true
 repository: mrfdev/AntiPopup

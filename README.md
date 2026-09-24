@@ -2,7 +2,9 @@
 
 AntiPopup is a standalone Paper plugin that hides Minecraft's unsafe-server
 login popup. This `mrfdev` fork is a deliberately narrow build for **Paper
-26.2 and its future Paper update line** with **Java 25 bytecode**.
+26.3 build 40 (ALPHA)** with **Java 25 bytecode**. Build `009` is an experimental
+test candidate; native-client popup and chat verification is still pending.
+The working 26.2 source is retained at tag `snapshot-paper-26.2-20260924`.
 
 Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/custom-server-plugins/antipopup/)
 
@@ -15,7 +17,7 @@ Player guide: [AntiPopup on docs.1moreblock.com](https://docs.1moreblock.com/cus
 - Contains no CraftBukkit/NMS implementation and no exact-version NMS switch.
   PacketEvents performs the protocol work, which removes the most brittle part
   of a Paper patch or minor-version update.
-- Uses stable, pinned dependencies plus a Gradle lockfile. Snapshot dependencies
+- Uses exact, pinned dependencies plus a Gradle lockfile. Snapshot dependencies
   and unused BoostedYAML, FoliaLib, ViaVersion hook, and compatibility modules
   are gone.
 - Treats deprecation and removal warnings as build errors and verifies the final
@@ -49,16 +51,20 @@ PacketEvents remains embedded solely as the Paper packet transport needed for
 the one join-packet mutation. Its upstream `spigot` adapter name is an internal
 Bukkit/Paper implementation detail, not a supported Spigot server target.
 AntiPopup itself now owns only five classes. The standalone JAR remains about
-4.5 MiB because PacketEvents' full reflection-driven injector and protocol
+4.9 MiB because PacketEvents' full reflection-driven injector and protocol
 library stays embedded; its generic internals are not supported old-client or
 proxy paths, and aggressively pruning them would risk breaking login injection.
 
 ## Release Lines
 
-- **Build `008` — current JDK compatibility release:** uses Oracle JDK
+- **Build `009` — experimental 26.3 candidate:** targets Paper 26.3 ALPHA build
+  40 and embeds PacketEvents 2.14.0 for its changed join-packet format. Keeps
+  Java 25 bytecode and the same popup-only listener. Awaiting native-client testing.
+- **Build `008` — working 26.2 snapshot:** uses Oracle JDK
   25.0.4.1 for builds and verifies Oracle JDK 25.0.4.1 and 26.0.2.1 runtimes.
   Paper 26.2 build 84, Java 25 bytecode, dependencies, and plugin behavior
-  remain unchanged. Live runs Java 26.
+  remain unchanged. Confirmed working by the operator before this upgrade.
+  Live runs Java 26; retain this source and JAR for the 26.2 server.
 - **Build `007` — previous Paper compatibility release:** updates the live
   popup-only line to Paper 26.2 stable build 84 and the exact stable Paper API.
   It retains build `006`'s deliberately minimal behavior and has no commands,
@@ -66,7 +72,7 @@ proxy paths, and aggressively pruning them would risk breaking login injection.
   filter, legacy-client path, proxy integration, or persistent state.
 - **Build `006` — live predecessor and rollback:** the popup-only build proven
   on the production 1MoreBlock server with a native client. Its JAR remains
-  available if build `008` needs to be rolled back after deployment.
+  available for the historical 26.2 rollback path.
 - **Build `003` — archived full legacy:** the feature-complete Paper-only 26.2
   fallback. It retains `/antipopup` commands, configuration and reload, the
   popup toggle, `server.properties` setup/restart handling, chat-report
@@ -84,15 +90,15 @@ and checksums are available from the
 ## Compatibility
 
 <!-- release-metadata:start -->
-| Component | Certified release |
+| Component | Build target |
 | --- | --- |
-| Server | Paper `26.2` build `84` (`STABLE`) |
-| Paper API | `26.2.build.84-stable` |
+| Server | Paper `26.3` build `40` (`ALPHA`) |
+| Paper API | `26.3.build.40-alpha` |
 | Java bytecode | Java `25` (class version `69`) |
 | Build JDK | Oracle JDK `25.0.4.1` |
 | Verified runtime JDKs | Oracle JDK `25.0.4.1` and `26.0.2.1` |
-| Plugin version | `14.0.2-008` |
-| Artifact | `1MB-AntiPopup-v14.0.2-008-j25-26.2.jar` |
+| Plugin version | `14.0.3-009` |
+| Artifact | `1MB-AntiPopup-v14.0.3-009-j25-26.3.jar` |
 <!-- release-metadata:end -->
 
 No proxy or companion plugin is required. The embedded PacketEvents Paper/Bukkit
@@ -102,7 +108,7 @@ implementation detail, not a supported Spigot server target.
 ## What It Does
 
 - For an uncancelled modern `JOIN_GAME` packet, sets
-  `enforcesSecureChat=true` so the native 26.2 client does not show the popup.
+  `enforcesSecureChat=true` to suppress the native client's unsafe-server popup.
 - Nothing else. Suppression is always enabled while the plugin is installed.
 
 AntiPopup has no rewards, costs, cooldowns, progression, player data, database,
@@ -123,14 +129,14 @@ The build runs strict compilation and `verifyArtifact`, then writes only the
 shaded, deployable plugin to:
 
 ```text
-build/libs/1MB-AntiPopup-v14.0.2-008-j25-26.2.jar
+build/libs/1MB-AntiPopup-v14.0.3-009-j25-26.3.jar
 ```
 
 `pluginVersion` and the required three-digit `pluginBuild` live in
 `gradle.properties`. Future artifacts keep the pattern
 `1MB-AntiPopup-v<version>-<build>-j<java>-<paper>.jar`.
 
-PacketEvents 2.13.0 is relocated inside the JAR. The matching Adventure NBT
+PacketEvents 2.14.0 is relocated inside the JAR. The matching Adventure NBT
 5.2.0 implementation is bundled while Paper supplies Adventure's API, keeping
 Paper and PacketEvents on one compatible component type system.
 PacketEvents' bundled bStats implementation is excluded, and its hard-coded
@@ -139,16 +145,16 @@ metrics bootstrap is linked to inert local compatibility shims.
 The strict build runs artifact, generated metadata, lockfile, and documentation
 drift checks. The `test` task currently reports `NO-SOURCE`; there are no unit-test
 sources. Isolated runtime tests verify startup, plugin listing, live release
-metadata, and clean disable on stable Paper 26.2 build 84 with Oracle JDK
-25.0.4.1 and 26.0.2.1. Build `006` remains the production native-client proof for
-the unchanged popup listener; deploy build `008` through normal staging and repeat
-the native-client popup/chat check before treating it as the new live rollback.
+metadata, and clean disable on Paper 26.3 ALPHA build 40 with Oracle JDK
+25.0.4.1 and 26.0.2.1. These checks do not prove client-visible behavior. Test
+build `009` using the [26.3 staging instructions](docs/paper-26.3-testing.md)
+before treating it as a supported live release.
 
 ## Future Paper Updates
 
 No project can guarantee compatibility with an unreleased Paper API. This fork
 instead removes the known exact-version/NMS failure point and keeps a repeatable
-certification path. For 26.2.1 or 26.3, make another disposable branch, update
+certification path. For the next Paper update, make another disposable branch, update
 `paperApiVersion` and `paperTarget` in `gradle.properties`, refresh the lockfile,
 run the strict build, and complete an isolated server and client-login test
 before merging.
@@ -176,8 +182,9 @@ checks are disabled and no metrics service is started.
 
 The isolated test does not replace a real-client login test. The production
 native 26.2 client completed the build `006` certification steps in
-`docs/maintenance.md`; build `008` keeps that packet code unchanged but still
-needs the normal staging login check. Protocol translators and older clients
+`docs/maintenance.md`; build `009` keeps that packet code unchanged but updates
+the embedded transport and still needs its own 26.3 login and chat check.
+Protocol translators and older clients
 remain out of scope for the modern release.
 
 ## Source, Support, and License

@@ -5,10 +5,10 @@ released. It does provide a low-risk update path: the production code has no
 CraftBukkit/NMS mapping, no exact server-version implementation switch, pinned
 dependencies, strict warning-free compilation, and final-JAR validation.
 
-## Candidate Workflow for 26.2.1 or 26.3
+## Candidate Workflow for Paper Updates
 
-1. Keep the exact build `005` rollback JAR and its checksum unchanged until a
-   newer minimalist build completes native-client certification.
+1. Keep the working 26.2 build `008` source snapshot and exact JAR with its
+   checksum. Preserve earlier rollback artifacts and all verification records.
 2. Create a new disposable branch from the last certified source commit.
 3. Set the exact released `paperApiVersion` and its `paperTarget` in
    `gradle.properties`.
@@ -26,7 +26,7 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 
    ```bash
    ./gradlew verifyMaintainedPaperJar \
-     -PpaperJarPath=/absolute/path/Paper-26.2.jar
+     -PpaperJarPath=/absolute/path/Paper-26.3.jar
    ```
 
 5. Select Oracle JDK 25.0.4.1 with `JAVA_HOME` and prepend its `bin` directory
@@ -57,9 +57,14 @@ dependencies, strict warning-free compilation, and final-JAR validation.
 
 Changing only `paperTarget` is not certification. PacketEvents must recognize
 the released protocol, its `JOIN_GAME` wrapper must remain compatible, and the
-native-client join behavior must be exercised. Paper 26.2.1, 26.3, and later
-versions remain uncertified until this checklist passes for their released
-builds.
+native-client join behavior must be exercised. The current 26.3 build 40 ALPHA
+candidate remains experimental until the direct native-client check passes.
+Later versions require the same complete checklist.
+
+The build accepts pinned STABLE, BETA, and ALPHA Paper artifacts; the channel is
+recorded in the JAR manifest and release metadata. Non-STABLE draft releases
+are marked as GitHub prereleases. An exact ALPHA API is still an experimental
+target, and a successful build does not make it production-certified.
 
 ## Dependency Maintenance
 
@@ -78,7 +83,10 @@ Build `003` is the public, archived, unsupported full-feature fallback. Build
 live minimalist rollback certified by its native-client join and chat test.
 Build `007` is the previous Paper 26.2 compatibility release. Build `008`
 updates the build JDK to 25.0.4.1 and runtime checks to 25.0.4.1 and 26.0.2.1
-without changing Paper or plugin behavior; promote it to the new live rollback
-only after the normal staging client check. Keep all retained
+without changing Paper or plugin behavior. The operator confirmed build `008`
+working before the 26.3 upgrade; tag `snapshot-paper-26.2-20260924` preserves that
+source. Build `009` is the 26.3 ALPHA candidate, awaiting in-game testing.
+Restore the original 26.2 server to roll back; never open an upgraded world with
+an older server JAR. Keep all retained
 JAR checksums with the deployment record, never load multiple builds together,
 and do not apply modern maintenance promises to legacy build `003`.
